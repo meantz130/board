@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meantz 놀이터 (Firebase)</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 240px;
+            --dark-bg: #1a1a1a;
+            --accent-color: #eb4d4b;
+            --bg-color: #f4f7f6;
+            --white: #ffffff;
+        }
+
+        body { font-family: 'Pretendard', sans-serif; margin: 0; background-color: var(--bg-color); }
+        .hidden { display: none !important; }
+
+        /* 로그인 화면 */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .login-card {
+            background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 350px; text-align: center;
+        }
+        .login-card h2 { margin-top: 0; color: var(--dark-bg); }
+        .login-card input {
+            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;
+        }
+        .login-card button {
+            width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+
+        /* 기존 레이아웃 유지 */
+        #mainApp { display: flex; min-height: 100vh; }
+        nav { width: var(--sidebar-width); background: var(--dark-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; }
+        nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; }
+        nav ul { list-style: none; padding: 0; flex-grow: 1; }
+        nav ul li { padding: 15px 25px; cursor: pointer; }
+        nav ul li.active { background: #333; color: white; border-right: 4px solid var(--accent-color); }
+        
+        .logout-btn { padding: 10px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; margin: 10px; border-radius: 4px; }
+
+        main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; }
+        .content-wrapper { width: 100%; max-width: 900px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+
+        /* 기존 게시판 스타일 생략 (이전 버전과 동일하게 적용됨) */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-card">
+        <h2>Meantz 놀이터</h2>
+        <input type="email" id="loginEmail" placeholder="아이디(이메일)">
+        <input type="password" id="loginPw" placeholder="비밀번호">
+        <button onclick="handleLogin()">로그인</button>
+        <p id="loginError" style="color:red; font-size:12px; margin-top:10px;"></p>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <nav>
+        <h3>MY BOARD</h3>
+        <ul id="menuList"></ul>
+        <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
+    </nav>
+
+    <main>
+        <div class="content-wrapper">
+            <div id="listView">
+                <h2 id="boardTitle">게시판</h2>
+                <div class="card" style="padding:0">
+                    <table>
+                        <thead><tr><th>번호</th><th>제목</th><th>작성자</th><th>날짜</th></tr></thead>
+                        <tbody id="postTableBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:20px; text-align:right;">
+                    <button class="btn-main" onclick="showEditor()">글쓰기</button>
+                </div>
+            </div>
+            </div>
+    </main>
+</div>
+
+<script>
+    // [중요] Firebase 콘솔에서 복사한 설정을 여기에 넣으세요!
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // 로그인 처리
+    function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const pw = document.getElementById('loginPw').value;
+        const errorMsg = document.getElementById('loginError');
+
+        auth.signInWithEmailAndPassword(email, pw)
+            .then(() => {
+                errorMsg.innerText = "";
+            })
+            .catch((error) => {
+                errorMsg.innerText = "로그인 실패: 아이디 또는 비밀번호를 확인하세요.";
+            });
+    }
+
+    // 로그아웃 처리
+    function handleLogout() {
+        auth.signOut();
+    }
+
+    // 인증 상태 감시 (로그인 여부에 따라 화면 전환)
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            initApp(); // 게시판 데이터 로드
+        } else {
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+    });
+
+    // --- 게시판 로직 (이전 v1.3 로직과 동일하게 작동하도록 구성) ---
+    // (이하 생략 - 이전 답변의 renderMenu, renderList 등의 JS 함수를 그대로 넣으시면 됩니다.)
+    
+    function initApp() {
+        // 기존에 만들었던 데이터 로드 및 렌더링 함수들을 호출
+        renderMenu();
+        showList();
+    }
+</script>
+</body>
+</html>
