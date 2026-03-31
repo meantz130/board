@@ -31,7 +31,14 @@
     </div>
 
     <script>
-        const firebaseConfig = { /* 동일한 설정값 사용 */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
+            authDomain: "meantzboard.firebaseapp.com",
+            projectId: "meantzboard",
+            storageBucket: "meantzboard.firebasestorage.app",
+            messagingSenderId: "807743275828",
+            appId: "1:807743275828:web:2effa72896931a2df15b61"
+    };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
