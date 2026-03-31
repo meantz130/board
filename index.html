@@ -20,21 +20,28 @@
         body { font-family: 'Pretendard', sans-serif; margin: 0; background-color: var(--bg-color); color: #333; }
         .hidden { display: none !important; }
 
+        /* 클릭 가능한 요소에 포인터 적용 */
+        button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
+
         /* 로그인 */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
         .login-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; font-weight: bold; }
 
         /* 레이아웃 */
         #mainApp { display: flex; min-height: 100vh; }
         nav { width: var(--sidebar-width); background: var(--dark-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; }
         nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; margin: 0; }
         nav ul { list-style: none; padding: 0; flex-grow: 1; margin: 0; overflow-y: auto; }
-        nav ul li { padding: 15px 25px; cursor: pointer; transition: 0.2s; }
+        nav ul li { padding: 15px 25px; transition: 0.2s; font-size: 14px; }
         nav ul li.active { background: #333; color: white; border-right: 4px solid var(--accent-color); }
-        .nav-footer { padding: 15px; border-top: 1px solid #333; }
-        .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        
+        .nav-footer { padding: 15px; border-top: 1px solid #333; background: #222; }
+        .user-info-box { font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; }
+        .user-info-box b { color: var(--accent-color); }
+        
+        .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; margin-top: 10px; }
 
         main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; }
         .content-wrapper { width: 100%; max-width: 900px; }
@@ -45,17 +52,19 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
         th { background: #f9f9f9; font-size: 0.85rem; color: #777; }
-        .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-sub { background: #eee; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-sub { background: #eee; color: #333; padding: 10px 20px; border: none; border-radius: 4px; }
 
         .search-bar { display: flex; gap: 5px; margin-top: 20px; }
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
-        /* 메뉴 관리 모달 */
+        /* 관리자 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 350px; max-height: 80vh; overflow-y: auto; }
-        .menu-item-edit { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
-        .order-btns button { padding: 2px 5px; font-size: 10px; cursor: pointer; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-height: 85vh; overflow-y: auto; }
+        .item-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+        .order-btns button { padding: 2px 5px; font-size: 10px; }
+        .tab-btn { padding: 5px 10px; border: 1px solid #ddd; background: #fff; cursor:pointer; }
+        .tab-btn.active { background: var(--dark-bg); color: white; }
     </style>
 </head>
 <body>
@@ -75,7 +84,11 @@
         <h3>MY BOARD</h3>
         <ul id="menuList"></ul>
         <div class="nav-footer">
-            <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px;" onclick="toggleMenuModal()">⚙️ 메뉴 관리 (순서변경)</button>
+            <div class="user-info-box">
+                접속: <span id="navUserEmail"></span><br>
+                등급: <b>Lv.<span id="navUserLevel">0</span></b>
+            </div>
+            <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px;" onclick="toggleMenuModal()">⚙️ 사이트 관리</button>
             <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
         </div>
     </nav>
@@ -131,20 +144,35 @@
 
 <div id="menuModal" class="modal hidden">
     <div class="modal-content">
-        <h3>메뉴 관리 (순서/삭제)</h3>
-        <div id="menuEditArea"></div>
-        <hr>
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="newMenuInput" placeholder="새 이름" style="flex:1; padding:5px;">
-            <button onclick="addMenu()">추가</button>
+        <div style="margin-bottom:15px;">
+            <button class="tab-btn active" id="tab1" onclick="switchTab(1)">메뉴/등급 설정</button>
+            <button class="tab-btn" id="tab2" onclick="switchTab(2)">사용자 관리</button>
         </div>
-        <button class="btn-main" style="width:100%; margin-top:15px;" onclick="saveMenuOrder()">최종 순서 저장</button>
+
+        <div id="tabContent1">
+            <p style="font-size:11px; color:#666;">* 게시판별 최소 입장 등급(0~9)을 설정하세요.</p>
+            <div id="menuEditArea"></div>
+            <hr>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="newMenuInput" placeholder="새 게시판" style="flex:1; padding:5px;">
+                <button onclick="addMenu()">추가</button>
+            </div>
+        </div>
+
+        <div id="tabContent2" class="hidden">
+            <p style="font-size:11px; color:#666;">* 특정 사용자의 등급을 수동으로 변경합니다.</p>
+            <input type="email" id="userEmailUpdate" placeholder="사용자 이메일" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
+            <input type="number" id="userLevelUpdate" placeholder="등급 (0~9)" min="0" max="9" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;">
+            <button class="btn-main" style="width:100%;" onclick="updateUserLevel()">등급 적용</button>
+        </div>
+
+        <hr style="margin-top:20px;">
+        <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">설정 최종 저장</button>
         <button class="btn-sub" style="width:100%; margin-top:5px;" onclick="toggleMenuModal()">닫기</button>
     </div>
 </div>
 
 <script>
-    // [관리자 설정] 이 이메일 주소들만 메뉴 수정 버튼이 보입니다.
     const ADMIN_EMAILS = ["오민택@aa.bb"]; 
 
     const firebaseConfig = {
@@ -161,8 +189,9 @@
     const db = firebase.firestore();
 
     let currentBoard = "";
-    let boards = [];
+    let boards = []; 
     let currentUserEmail = "";
+    let currentUserLevel = 0;
 
     function handleLogin() {
         const email = document.getElementById('loginEmail').value;
@@ -173,13 +202,19 @@
     }
     function handleLogout() { auth.signOut(); }
 
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUserEmail = user.email;
+            document.getElementById('navUserEmail').innerText = user.email;
+            
+            // 사용자 등급 정보 가져오기
+            const userDoc = await db.collection("users").doc(user.email).get();
+            currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
+            document.getElementById('navUserLevel').innerText = currentUserLevel;
+
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             
-            // 관리자 확인
             if (ADMIN_EMAILS.includes(user.email)) {
                 document.getElementById('adminMenuBtn').classList.remove('hidden');
             }
@@ -190,12 +225,12 @@
         }
     });
 
-    // 메뉴 관리 로직
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
-        boards = doc.exists ? doc.data().list : ["자유게시판"];
+        // boards 데이터 구조 변경: { name: string, level: number }
+        boards = doc.exists ? doc.data().list : [{name: "자유게시판", level: 0}];
         renderMenu();
-        if(!currentBoard) switchBoard(boards[0]);
+        if(!currentBoard) switchBoard(boards[0].name);
     }
 
     function renderMenu() {
@@ -203,9 +238,12 @@
         list.innerHTML = "";
         boards.forEach(b => {
             const li = document.createElement('li');
-            li.innerText = b;
-            if(b === currentBoard) li.className = "active";
-            li.onclick = () => switchBoard(b);
+            li.innerHTML = `${b.name} <span style="font-size:10px; opacity:0.5;">Lv.${b.level}</span>`;
+            if(b.name === currentBoard) li.className = "active";
+            li.onclick = () => {
+                if(currentUserLevel < b.level) return alert(`이 게시판은 레벨 ${b.level} 이상만 입장 가능합니다.`);
+                switchBoard(b.name);
+            };
             list.appendChild(li);
         });
     }
@@ -218,11 +256,17 @@
         showList();
     }
 
-    // 메뉴 순서 변경 및 삭제 모달 로직
     function toggleMenuModal() {
         const modal = document.getElementById('menuModal');
         modal.classList.toggle('hidden');
         if(!modal.classList.contains('hidden')) renderMenuEditArea();
+    }
+
+    function switchTab(n) {
+        document.getElementById('tabContent1').classList.toggle('hidden', n !== 1);
+        document.getElementById('tabContent2').classList.toggle('hidden', n !== 2);
+        document.getElementById('tab1').classList.toggle('active', n === 1);
+        document.getElementById('tab2').classList.toggle('active', n === 2);
     }
 
     function renderMenuEditArea() {
@@ -230,17 +274,30 @@
         area.innerHTML = "";
         boards.forEach((b, i) => {
             const div = document.createElement('div');
-            div.className = "menu-item-edit";
+            div.className = "item-row";
             div.innerHTML = `
-                <span>${b}</span>
+                <div style="flex:1;"><b>${b.name}</b></div>
+                <div style="margin-right:10px;">
+                    Lv <input type="number" value="${b.level}" onchange="updateBoardLevel(${i}, this.value)" style="width:35px; padding:2px;">
+                </div>
                 <div class="order-btns">
                     <button onclick="moveMenu(${i}, -1)">▲</button>
                     <button onclick="moveMenu(${i}, 1)">▼</button>
-                    <button onclick="deleteMenu(${i})" style="color:red; margin-left:5px;">X</button>
+                    <button onclick="deleteMenu(${i})" style="color:red;">X</button>
                 </div>
             `;
             area.appendChild(div);
         });
+    }
+
+    function updateBoardLevel(idx, val) { boards[idx].level = parseInt(val) || 0; }
+    
+    async function updateUserLevel() {
+        const email = document.getElementById('userEmailUpdate').value.trim();
+        const level = parseInt(document.getElementById('userLevelUpdate').value) || 0;
+        if(!email) return alert("이메일을 입력하세요.");
+        await db.collection("users").doc(email).set({ level: level }, { merge: true });
+        alert(`${email}님의 등급이 ${level}로 변경되었습니다.`);
     }
 
     function moveMenu(index, direction) {
@@ -253,30 +310,26 @@
     }
 
     async function deleteMenu(index) {
-        if(boards.length <= 1) return alert("게시판은 최소 1개여야 합니다.");
-        if(confirm("이 게시판 목록을 삭제할까요? (데이터는 삭제되지 않음)")) {
-            boards.splice(index, 1);
-            renderMenuEditArea();
-        }
+        if(boards.length <= 1) return alert("최소 1개 유지");
+        if(confirm("삭제하시겠습니까?")) { boards.splice(index, 1); renderMenuEditArea(); }
     }
 
     async function addMenu() {
         const val = document.getElementById('newMenuInput').value.trim();
-        if(val && !boards.includes(val)) {
-            boards.push(val);
+        if(val) {
+            boards.push({name: val, level: 0});
             document.getElementById('newMenuInput').value = "";
             renderMenuEditArea();
         }
     }
 
-    async function saveMenuOrder() {
+    async function saveAllSettings() {
         await db.collection("settings").doc("menu").set({ list: boards });
-        alert("순서가 저장되었습니다.");
+        alert("모든 설정이 저장되었습니다.");
         loadMenu();
         toggleMenuModal();
     }
 
-    // 게시판 핵심 로직
     async function showList(search = "") {
         hideAll();
         document.getElementById('listView').classList.remove('hidden');
@@ -295,7 +348,7 @@
         });
 
         if(filtered.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>결과가 없습니다.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>글이 없습니다.</td></tr>";
             return;
         }
 
@@ -307,33 +360,20 @@
         });
     }
 
-    function searchPosts() {
-        const query = document.getElementById('searchInput').value.trim();
-        showList(query);
-    }
+    function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
 
     async function savePost() {
         const title = document.getElementById('postTitleInput').value.trim();
         const content = document.getElementById('postContentInput').value.trim();
         const editId = document.getElementById('editId').value;
-
-        if(!title || !content) return alert("제목과 내용을 입력하세요.");
+        if(!title || !content) return alert("내용을 입력하세요.");
 
         const now = new Date();
         const dateShort = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
-        const postData = { 
-            title, 
-            author: currentUserEmail, // 로그인한 계정으로 고정
-            content, 
-            dateShort, 
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-        };
+        const postData = { title, author: currentUserEmail, content, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
 
-        if(editId) {
-            await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
-        } else {
-            await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
-        }
+        if(editId) await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
+        else await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
         showList();
     }
 
@@ -357,21 +397,17 @@
         document.getElementById('editorView').classList.remove('hidden');
         document.getElementById('displayAuthor').innerText = currentUserEmail;
         if(id) {
-            document.getElementById('editorTitle').innerText = "글 수정";
             document.getElementById('editId').value = id;
             document.getElementById('postTitleInput').value = data.title;
             document.getElementById('postContentInput').value = data.content;
         } else {
-            document.getElementById('editorTitle').innerText = "새 글 작성";
             document.getElementById('editId').value = "";
             document.getElementById('postTitleInput').value = "";
             document.getElementById('postContentInput').value = "";
         }
     }
 
-    function hideAll() {
-        ['listView', 'editorView', 'detailView'].forEach(id => document.getElementById(id).classList.add('hidden'));
-    }
+    function hideAll() { ['listView', 'editorView', 'detailView'].forEach(id => document.getElementById(id).classList.add('hidden')); }
 </script>
 </body>
 </html>
