@@ -138,6 +138,12 @@
                 <div class="card">
                     <input type="hidden" id="editId">
                     <p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">작성자: <b id="displayAuthor"></b></p>
+
+                    <div style="margin-bottom: 10px; font-size: 14px;">
+                        <label style="cursor: pointer;">
+                            <input type="checkbox" id="htmlCheck"> HTML 코드 사용하기
+                        </label>
+                    </div>
                     <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; box-sizing: border-box;">
                     <textarea id="postContentInput" style="width:100%; height:350px; padding:10px; border:1px solid #ddd; box-sizing: border-box;"></textarea>
                     <div style="text-align: right; margin-top:15px;">
@@ -402,11 +408,12 @@
     async function savePost() {
         const title = document.getElementById('postTitleInput').value.trim();
         const content = document.getElementById('postContentInput').value.trim();
+        const isHTML = document.getElementById('htmlCheck').checked; // 체크 여부 확인
         const editId = document.getElementById('editId').value;
         if(!title || !content) return alert("내용을 입력하세요.");
         const now = new Date();
         const dateShort = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
-        const postData = { title, author: currentUserEmail, content, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+        const postData = { title, author: currentUserEmail, content, isHTML, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
         if(editId) await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
         else await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
         showList();
@@ -417,7 +424,14 @@
         document.getElementById('detailView').classList.remove('hidden');
         document.getElementById('viewTitle').innerText = data.title;
         document.getElementById('viewMeta').innerText = `작성자: ${data.author} | 날짜: ${data.dateShort}`;
-        document.getElementById('viewContent').innerText = data.content;
+        const viewContent = document.getElementById('viewContent');
+        // HTML 모드 여부에 따른 렌더링 방식 결정
+        if (data.isHTML) {
+            viewContent.innerHTML = data.content; // HTML 태그 적용
+        } else {
+            viewContent.innerText = data.content; // 일반 텍스트로 표시
+        }
+        
         document.getElementById('editBtn').onclick = () => showEditor(id, data);
         document.getElementById('deleteBtn').onclick = async () => {
             if(confirm("삭제할까요?")) {
@@ -431,14 +445,19 @@
         hideAll();
         document.getElementById('editorView').classList.remove('hidden');
         document.getElementById('displayAuthor').innerText = currentUserEmail;
+
+        const htmlCheck = document.getElementById('htmlCheck');
+
         if(id) {
             document.getElementById('editId').value = id;
             document.getElementById('postTitleInput').value = data.title;
             document.getElementById('postContentInput').value = data.content;
+            htmlCheck.checked = data.isHTML || false; // 기존 설정 불러오기
         } else {
             document.getElementById('editId').value = "";
             document.getElementById('postTitleInput').value = "";
             document.getElementById('postContentInput').value = "";
+            htmlCheck.checked = false; // 새 글은 기본 일반모드
         }
     }
 
