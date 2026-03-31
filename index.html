@@ -61,9 +61,13 @@
         .search-bar { display: flex; gap: 5px; margin-top: 20px; }
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
-        /* 로딩 중일 때 화면 깜빡임 방지 */
-        #mainApp.loading { visibility: hidden; }
-        #loginOverlay.loading { display: none; }
+        /* 기존 style 태그 안에 추가 또는 수정 */
+        #loginOverlay, #mainApp {
+            display: none !important; /* 처음에는 둘 다 완전히 숨김 */
+        }
+
+        /* 로딩 중임을 알리는 스타일 (선택 사항) */
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; display: flex; justify-content: center; align-items: center; color: white; z-index: 3000; }
 
         /* 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
@@ -74,6 +78,10 @@
     </style>
 </head>
 <body>
+
+<div id="loadingLayer" class="loading-screen">잠시만 기다려 주세요...</div>
+<div id="loginOverlay"> ... </div>
+<div id="mainApp"> ... </div>
 
 <div id="loginOverlay">
     <div class="login-card">
@@ -223,16 +231,21 @@
     auth.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
         const mainApp = document.getElementById('mainApp');
+        const loadingLayer = document.getElementById('loadingLayer');
+        // 1. 일단 로딩 화면을 숨김
+        if (loadingLayer) loadingLayer.style.display = 'none';
         
         if (user) {
+            // 로그인 된 경우
             currentUserEmail = user.email;
             document.getElementById('navUserEmail').innerText = user.email;
+            // 유저 정보 로드 (User Summary 등에 기반한 기존 로직)
             const userDoc = await db.collection("users").doc(user.email).get();
             currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
-            document.getElementById('navUserLevel').innerText = currentUserLevel;
-            // 로그인 확인 즉시 화면 교체
-            loginOverlay.classList.add('hidden');
+
+            loginOverlay.style.setProperty('display', 'none', 'important');
             mainApp.classList.remove('hidden');
+            mainApp.style.display = 'flex'; // 메인 앱 표시
 
             if (ADMIN_EMAILS.includes(user.email)) {
                 document.getElementById('adminMenuBtn').classList.remove('hidden');
@@ -240,8 +253,8 @@
             loadMenu();
         } else {
             // 로그아웃 상태일 때만 로그인창 표시
-            loginOverlay.classList.remove('hidden');
-            mainApp.classList.add('hidden');
+            mainApp.style.setProperty('display', 'none', 'important');
+            loginOverlay.style.display = 'flex'; // 로그인 창 표시
         }
     });
 
