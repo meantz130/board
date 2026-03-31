@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meantz 놀이터 (Firebase)</title>
+    <title>Meantz 놀이터 (Firebase v1.5)</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --sidebar-width: 240px;
@@ -13,45 +14,46 @@
             --accent-color: #eb4d4b;
             --bg-color: #f4f7f6;
             --white: #ffffff;
+            --border: #e0e0e0;
         }
 
-        body { font-family: 'Pretendard', sans-serif; margin: 0; background-color: var(--bg-color); }
+        body { font-family: 'Pretendard', sans-serif; margin: 0; background-color: var(--bg-color); color: #333; }
         .hidden { display: none !important; }
 
-        /* 로그인 화면 */
+        /* 로그인 레이아웃 */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
         }
-        .login-card {
-            background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 350px; text-align: center;
-        }
-        .login-card h2 { margin-top: 0; color: var(--dark-bg); }
-        .login-card input {
-            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;
-        }
-        .login-card button {
-            width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
-        }
+        .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
+        .login-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 기존 레이아웃 유지 */
+        /* 메인 앱 레이아웃 */
         #mainApp { display: flex; min-height: 100vh; }
         nav { width: var(--sidebar-width); background: var(--dark-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; }
-        nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; }
-        nav ul { list-style: none; padding: 0; flex-grow: 1; }
-        nav ul li { padding: 15px 25px; cursor: pointer; }
+        nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; margin: 0; }
+        nav ul { list-style: none; padding: 0; flex-grow: 1; margin: 0; overflow-y: auto; }
+        nav ul li { padding: 15px 25px; cursor: pointer; transition: 0.2s; }
         nav ul li.active { background: #333; color: white; border-right: 4px solid var(--accent-color); }
-        
-        .logout-btn { padding: 10px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; margin: 10px; border-radius: 4px; }
+        .nav-footer { padding: 15px; border-top: 1px solid #333; }
+        .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; border-radius: 4px; margin-top: 10px; }
 
         main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; }
         .content-wrapper { width: 100%; max-width: 900px; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
 
-        /* 기존 게시판 스타일 생략 (이전 버전과 동일하게 적용됨) */
+        /* 테이블 및 버튼 */
+        .board-header { border-bottom: 2px solid var(--dark-bg); margin-bottom: 20px; padding-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        th { background: #f9f9f9; font-size: 0.85rem; color: #777; }
+        .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-sub { background: #eee; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+
+        /* 모달 */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 300px; }
     </style>
 </head>
 <body>
@@ -70,13 +72,16 @@
     <nav>
         <h3>MY BOARD</h3>
         <ul id="menuList"></ul>
-        <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
+        <div class="nav-footer">
+            <button class="btn-sub" style="width:100%; font-size: 12px;" onclick="toggleMenuModal()">⚙️ 메뉴 관리</button>
+            <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
+        </div>
     </nav>
 
     <main>
         <div class="content-wrapper">
             <div id="listView">
-                <h2 id="boardTitle">게시판</h2>
+                <div class="board-header"><h2 id="boardTitle">게시판</h2></div>
                 <div class="card" style="padding:0">
                     <table>
                         <thead><tr><th>번호</th><th>제목</th><th>작성자</th><th>날짜</th></tr></thead>
@@ -87,12 +92,52 @@
                     <button class="btn-main" onclick="showEditor()">글쓰기</button>
                 </div>
             </div>
+
+            <div id="editorView" class="hidden">
+                <div class="board-header"><h2 id="editorTitle">새 글 작성</h2></div>
+                <div class="card">
+                    <input type="hidden" id="editId">
+                    <input type="text" id="postAuthorInput" placeholder="작성자" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd;">
+                    <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd;">
+                    <textarea id="postContentInput" style="width:100%; height:300px; padding:10px; border:1px solid #ddd;"></textarea>
+                    <div style="text-align: right; margin-top:15px;">
+                        <button class="btn-sub" onclick="showList()">취소</button>
+                        <button class="btn-main" onclick="savePost()">저장하기</button>
+                    </div>
+                </div>
             </div>
+
+            <div id="detailView" class="hidden">
+                <div class="board-header"><h2 id="viewTitle">내용 보기</h2></div>
+                <div class="card">
+                    <p id="viewMeta" style="color:#888; font-size:13px;"></p>
+                    <div id="viewContent" style="white-space: pre-wrap; line-height:1.6; min-height:150px;"></div>
+                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <button class="btn-sub" onclick="showList()">목록으로</button>
+                        <div>
+                            <button id="editBtn" class="btn-sub">수정</button>
+                            <button id="deleteBtn" class="btn-sub" style="color:red;">삭제</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 </div>
 
+<div id="menuModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>게시판 메뉴 관리</h3>
+        <div id="menuEditArea"></div>
+        <hr>
+        <input type="text" id="newMenuInput" placeholder="새 게시판 이름" style="width:70%; padding:5px;">
+        <button onclick="addMenu()">추가</button>
+        <button class="btn-sub" style="width:100%; margin-top:15px;" onclick="toggleMenuModal()">닫기</button>
+    </div>
+</div>
+
 <script>
-    // [중요] Firebase 콘솔에서 복사한 설정을 여기에 넣으세요!
     const firebaseConfig = {
         apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
         authDomain: "meantzboard.firebaseapp.com",
@@ -100,53 +145,175 @@
         projectId: "meantzboard",
         storageBucket: "meantzboard.firebasestorage.app",
         messagingSenderId: "807743275828",
-        appId: "1:807743275828:web:2effa72896931a2df15b61",
-        measurementId: "G-2XGW5Z3W8L"
+        appId: "1:807743275828:web:2effa72896931a2df15b61"
     };
 
-    // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // 로그인 처리
+    let currentBoard = "";
+    let boards = [];
+
+    // 로그인/로그아웃
     function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const pw = document.getElementById('loginPw').value;
-        const errorMsg = document.getElementById('loginError');
-
-        auth.signInWithEmailAndPassword(email, pw)
-            .then(() => {
-                errorMsg.innerText = "";
-            })
-            .catch((error) => {
-                errorMsg.innerText = "로그인 실패: 아이디 또는 비밀번호를 확인하세요.";
-            });
+        auth.signInWithEmailAndPassword(email, pw).catch(e => {
+            document.getElementById('loginError').innerText = "아이디/비밀번호 오류입니다.";
+        });
     }
+    function handleLogout() { auth.signOut(); }
 
-    // 로그아웃 처리
-    function handleLogout() {
-        auth.signOut();
-    }
-
-    // 인증 상태 감시 (로그인 여부에 따라 화면 전환)
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            initApp(); // 게시판 데이터 로드
+            loadMenu();
         } else {
             document.getElementById('loginOverlay').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
         }
     });
 
-    // --- 게시판 로직 (이전 v1.3 로직과 동일하게 작동하도록 구성) ---
-    // (이하 생략 - 이전 답변의 renderMenu, renderList 등의 JS 함수를 그대로 넣으시면 됩니다.)
-    
-    function initApp() {
-        // 기존에 만들었던 데이터 로드 및 렌더링 함수들을 호출
+    // 메뉴 로직 (Firestore 연동)
+    async function loadMenu() {
+        const doc = await db.collection("settings").doc("menu").get();
+        if (doc.exists) {
+            boards = doc.data().list;
+        } else {
+            boards = ["자유게시판"];
+            await db.collection("settings").doc("menu").set({ list: boards });
+        }
+        renderMenu();
+        if(!currentBoard) switchBoard(boards[0]);
+    }
+
+    function renderMenu() {
+        const list = document.getElementById('menuList');
+        list.innerHTML = "";
+        boards.forEach(b => {
+            const li = document.createElement('li');
+            li.innerText = b;
+            if(b === currentBoard) li.className = "active";
+            li.onclick = () => switchBoard(b);
+            list.appendChild(li);
+        });
+    }
+
+    function switchBoard(name) {
+        currentBoard = name;
+        document.getElementById('boardTitle').innerText = name;
         renderMenu();
         showList();
+    }
+
+    // 메뉴 관리 (관리자용)
+    function toggleMenuModal() {
+        const modal = document.getElementById('menuModal');
+        modal.classList.toggle('hidden');
+        if(!modal.classList.contains('hidden')) {
+            const area = document.getElementById('menuEditArea');
+            area.innerHTML = "";
+            boards.forEach((b, i) => {
+                area.innerHTML += `<div>${b} <button onclick="deleteMenu(${i})">X</button></div>`;
+            });
+        }
+    }
+
+    async function addMenu() {
+        const val = document.getElementById('newMenuInput').value.trim();
+        if(val && !boards.includes(val)) {
+            boards.push(val);
+            await db.collection("settings").doc("menu").update({ list: boards });
+            document.getElementById('newMenuInput').value = "";
+            loadMenu();
+            toggleMenuModal();
+        }
+    }
+
+    async function deleteMenu(index) {
+        if(boards.length <= 1) return alert("최소 한 개는 있어야 합니다.");
+        boards.splice(index, 1);
+        await db.collection("settings").doc("menu").update({ list: boards });
+        loadMenu();
+        toggleMenuModal();
+    }
+
+    // 게시판 데이터 로직
+    async function showList() {
+        hideAll();
+        document.getElementById('listView').classList.remove('hidden');
+        const tbody = document.getElementById('postTableBody');
+        tbody.innerHTML = "<tr><td colspan='4'>로딩 중...</td></tr>";
+
+        const snapshot = await db.collection("boards").doc(currentBoard).collection("posts").orderBy("timestamp", "desc").get();
+        tbody.innerHTML = "";
+        let i = snapshot.size;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const tr = document.createElement('tr');
+            tr.onclick = () => showDetail(doc.id, data);
+            tr.innerHTML = `<td>${i--}</td><td>${data.title}</td><td>${data.author}</td><td>${data.dateShort}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function savePost() {
+        const title = document.getElementById('postTitleInput').value.trim();
+        const author = document.getElementById('postAuthorInput').value.trim() || "익명";
+        const content = document.getElementById('postContentInput').value.trim();
+        const editId = document.getElementById('editId').value;
+
+        if(!title || !content) return alert("내용을 입력하세요.");
+
+        const now = new Date();
+        const dateShort = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
+        const postData = { title, author, content, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+
+        if(editId) {
+            await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
+        } else {
+            await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
+        }
+        showList();
+    }
+
+    function showDetail(id, data) {
+        hideAll();
+        document.getElementById('detailView').classList.remove('hidden');
+        document.getElementById('viewTitle').innerText = data.title;
+        document.getElementById('viewMeta').innerText = `작성자: ${data.author} | 날짜: ${data.dateShort}`;
+        document.getElementById('viewContent').innerText = data.content;
+        document.getElementById('editBtn').onclick = () => showEditor(id, data);
+        document.getElementById('deleteBtn').onclick = async () => {
+            if(confirm("삭제할까요?")) {
+                await db.collection("boards").doc(currentBoard).collection("posts").doc(id).delete();
+                showList();
+            }
+        };
+    }
+
+    function showEditor(id = null, data = null) {
+        hideAll();
+        document.getElementById('editorView').classList.remove('hidden');
+        if(id) {
+            document.getElementById('editorTitle').innerText = "글 수정";
+            document.getElementById('editId').value = id;
+            document.getElementById('postAuthorInput').value = data.author;
+            document.getElementById('postTitleInput').value = data.title;
+            document.getElementById('postContentInput').value = data.content;
+        } else {
+            document.getElementById('editorTitle').innerText = "새 글 작성";
+            document.getElementById('editId').value = "";
+            document.getElementById('postAuthorInput').value = "";
+            document.getElementById('postTitleInput').value = "";
+            document.getElementById('postContentInput').value = "";
+        }
+    }
+
+    function hideAll() {
+        ['listView', 'editorView', 'detailView'].forEach(id => document.getElementById(id).classList.add('hidden'));
     }
 </script>
 </body>
