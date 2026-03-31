@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Meantz 실시간 채팅</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f0f2f5; }
+        header { background: #4a69bd; color: white; padding: 15px; text-align: center; font-weight: bold; }
+        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; }
+        .msg.mine { align-self: flex-end; background: #4a69bd; color: white; border-bottom-right-radius: 2px; }
+        .msg.others { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .sender { font-size: 10px; margin-bottom: 3px; opacity: 0.7; }
+        .input-area { padding: 15px; background: white; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        button { padding: 8px 15px; background: #4a69bd; color: white; border: none; border-radius: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header>Meantz Playground Chat</header>
+    <div id="chatBox"></div>
+    <div class="input-area">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeyup="if(window.event.keyCode==13) sendChat()">
+        <button onclick="sendChat()">전송</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
+            authDomain: "meantzboard.firebaseapp.com",
+            projectId: "meantzboard",
+            storageBucket: "meantzboard.firebasestorage.app",
+            messagingSenderId: "807743275828",
+            appId: "1:807743275828:web:2effa72896931a2df15b61"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        let userEmail = "";
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                userEmail = user.email;
+                listenChat();
+            } else {
+                window.close(); // 로그인 안되어 있으면 닫기
+            }
+        });
+
+        async function sendChat() {
+            const msg = document.getElementById('chatInput').value.trim();
+            if(!msg) return;
+            document.getElementById('chatInput').value = "";
+            await db.collection("chats").add({
+                sender: userEmail,
+                text: msg,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        function listenChat() {
+            db.collection("chats").orderBy("timestamp", "asc").limitToLast(50)
+                .onSnapshot(snapshot => {
+                    const chatBox = document.getElementById('chatBox');
+                    chatBox.innerHTML = "";
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isMine = data.sender === userEmail;
+                        const div = document.createElement('div');
+                        div.className = `msg ${isMine ? 'mine' : 'others'}`;
+                        div.innerHTML = `
+                            <div class="sender">${data.sender}</div>
+                            <div>${data.text}</div>
+                        `;
+                        chatBox.appendChild(div);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+        }
+    </script>
+</body>
+</html>
