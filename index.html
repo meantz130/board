@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meantz 놀이터 (Firebase v1.5)</title>
+    <title>Meantz 놀이터 v1.6</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -20,16 +20,13 @@
         body { font-family: 'Pretendard', sans-serif; margin: 0; background-color: var(--bg-color); color: #333; }
         .hidden { display: none !important; }
 
-        /* 로그인 레이아웃 */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
-        }
+        /* 로그인 */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
         .login-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 메인 앱 레이아웃 */
+        /* 레이아웃 */
         #mainApp { display: flex; min-height: 100vh; }
         nav { width: var(--sidebar-width); background: var(--dark-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; }
         nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; margin: 0; }
@@ -43,7 +40,7 @@
         .content-wrapper { width: 100%; max-width: 900px; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
 
-        /* 테이블 및 버튼 */
+        /* 테이블/검색/버튼 */
         .board-header { border-bottom: 2px solid var(--dark-bg); margin-bottom: 20px; padding-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
@@ -51,9 +48,14 @@
         .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-sub { background: #eee; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
 
-        /* 모달 */
+        .search-bar { display: flex; gap: 5px; margin-top: 20px; }
+        .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* 메뉴 관리 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 300px; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 350px; max-height: 80vh; overflow-y: auto; }
+        .menu-item-edit { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        .order-btns button { padding: 2px 5px; font-size: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -73,7 +75,7 @@
         <h3>MY BOARD</h3>
         <ul id="menuList"></ul>
         <div class="nav-footer">
-            <button class="btn-sub" style="width:100%; font-size: 12px;" onclick="toggleMenuModal()">⚙️ 메뉴 관리</button>
+            <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px;" onclick="toggleMenuModal()">⚙️ 메뉴 관리 (순서변경)</button>
             <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
         </div>
     </nav>
@@ -88,18 +90,20 @@
                         <tbody id="postTableBody"></tbody>
                     </table>
                 </div>
-                <div style="margin-top:20px; text-align:right;">
-                    <button class="btn-main" onclick="showEditor()">글쓰기</button>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="제목 또는 내용 검색..." onkeyup="if(window.event.keyCode==13) searchPosts()">
+                    <button class="btn-sub" onclick="searchPosts()">검색</button>
+                    <button class="btn-main" onclick="showEditor()" style="margin-left:auto;">글쓰기</button>
                 </div>
             </div>
 
             <div id="editorView" class="hidden">
-                <div class="board-header"><h2 id="editorTitle">새 글 작성</h2></div>
+                <div class="board-header"><h2 id="editorTitle">작성</h2></div>
                 <div class="card">
                     <input type="hidden" id="editId">
-                    <input type="text" id="postAuthorInput" placeholder="작성자" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd;">
-                    <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd;">
-                    <textarea id="postContentInput" style="width:100%; height:300px; padding:10px; border:1px solid #ddd;"></textarea>
+                    <p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">작성자: <b id="displayAuthor"></b></p>
+                    <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; box-sizing: border-box;">
+                    <textarea id="postContentInput" style="width:100%; height:350px; padding:10px; border:1px solid #ddd; box-sizing: border-box;"></textarea>
                     <div style="text-align: right; margin-top:15px;">
                         <button class="btn-sub" onclick="showList()">취소</button>
                         <button class="btn-main" onclick="savePost()">저장하기</button>
@@ -112,8 +116,7 @@
                 <div class="card">
                     <p id="viewMeta" style="color:#888; font-size:13px;"></p>
                     <div id="viewContent" style="white-space: pre-wrap; line-height:1.6; min-height:150px;"></div>
-                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="margin-top:40px; display:flex; justify-content:space-between; border-top: 1px solid #eee; padding-top: 20px;">
                         <button class="btn-sub" onclick="showList()">목록으로</button>
                         <div>
                             <button id="editBtn" class="btn-sub">수정</button>
@@ -128,20 +131,25 @@
 
 <div id="menuModal" class="modal hidden">
     <div class="modal-content">
-        <h3>게시판 메뉴 관리</h3>
+        <h3>메뉴 관리 (순서/삭제)</h3>
         <div id="menuEditArea"></div>
         <hr>
-        <input type="text" id="newMenuInput" placeholder="새 게시판 이름" style="width:70%; padding:5px;">
-        <button onclick="addMenu()">추가</button>
-        <button class="btn-sub" style="width:100%; margin-top:15px;" onclick="toggleMenuModal()">닫기</button>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="newMenuInput" placeholder="새 이름" style="flex:1; padding:5px;">
+            <button onclick="addMenu()">추가</button>
+        </div>
+        <button class="btn-main" style="width:100%; margin-top:15px;" onclick="saveMenuOrder()">최종 순서 저장</button>
+        <button class="btn-sub" style="width:100%; margin-top:5px;" onclick="toggleMenuModal()">닫기</button>
     </div>
 </div>
 
 <script>
+    // [관리자 설정] 이 이메일 주소들만 메뉴 수정 버튼이 보입니다.
+    const ADMIN_EMAILS = ["admin@test.com"]; 
+
     const firebaseConfig = {
         apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
         authDomain: "meantzboard.firebaseapp.com",
-        databaseURL: "https://meantzboard-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "meantzboard",
         storageBucket: "meantzboard.firebasestorage.app",
         messagingSenderId: "807743275828",
@@ -154,8 +162,8 @@
 
     let currentBoard = "";
     let boards = [];
+    let currentUserEmail = "";
 
-    // 로그인/로그아웃
     function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const pw = document.getElementById('loginPw').value;
@@ -167,8 +175,14 @@
 
     auth.onAuthStateChanged(user => {
         if (user) {
+            currentUserEmail = user.email;
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
+            
+            // 관리자 확인
+            if (ADMIN_EMAILS.includes(user.email)) {
+                document.getElementById('adminMenuBtn').classList.remove('hidden');
+            }
             loadMenu();
         } else {
             document.getElementById('loginOverlay').classList.remove('hidden');
@@ -176,15 +190,10 @@
         }
     });
 
-    // 메뉴 로직 (Firestore 연동)
+    // 메뉴 관리 로직
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
-        if (doc.exists) {
-            boards = doc.data().list;
-        } else {
-            boards = ["자유게시판"];
-            await db.collection("settings").doc("menu").set({ list: boards });
-        }
+        boards = doc.exists ? doc.data().list : ["자유게시판"];
         renderMenu();
         if(!currentBoard) switchBoard(boards[0]);
     }
@@ -204,20 +213,50 @@
     function switchBoard(name) {
         currentBoard = name;
         document.getElementById('boardTitle').innerText = name;
+        document.getElementById('searchInput').value = "";
         renderMenu();
         showList();
     }
 
-    // 메뉴 관리 (관리자용)
+    // 메뉴 순서 변경 및 삭제 모달 로직
     function toggleMenuModal() {
         const modal = document.getElementById('menuModal');
         modal.classList.toggle('hidden');
-        if(!modal.classList.contains('hidden')) {
-            const area = document.getElementById('menuEditArea');
-            area.innerHTML = "";
-            boards.forEach((b, i) => {
-                area.innerHTML += `<div>${b} <button onclick="deleteMenu(${i})">X</button></div>`;
-            });
+        if(!modal.classList.contains('hidden')) renderMenuEditArea();
+    }
+
+    function renderMenuEditArea() {
+        const area = document.getElementById('menuEditArea');
+        area.innerHTML = "";
+        boards.forEach((b, i) => {
+            const div = document.createElement('div');
+            div.className = "menu-item-edit";
+            div.innerHTML = `
+                <span>${b}</span>
+                <div class="order-btns">
+                    <button onclick="moveMenu(${i}, -1)">▲</button>
+                    <button onclick="moveMenu(${i}, 1)">▼</button>
+                    <button onclick="deleteMenu(${i})" style="color:red; margin-left:5px;">X</button>
+                </div>
+            `;
+            area.appendChild(div);
+        });
+    }
+
+    function moveMenu(index, direction) {
+        const newIdx = index + direction;
+        if (newIdx < 0 || newIdx >= boards.length) return;
+        const temp = boards[index];
+        boards[index] = boards[newIdx];
+        boards[newIdx] = temp;
+        renderMenuEditArea();
+    }
+
+    async function deleteMenu(index) {
+        if(boards.length <= 1) return alert("게시판은 최소 1개여야 합니다.");
+        if(confirm("이 게시판 목록을 삭제할까요? (데이터는 삭제되지 않음)")) {
+            boards.splice(index, 1);
+            renderMenuEditArea();
         }
     }
 
@@ -225,51 +264,70 @@
         const val = document.getElementById('newMenuInput').value.trim();
         if(val && !boards.includes(val)) {
             boards.push(val);
-            await db.collection("settings").doc("menu").update({ list: boards });
             document.getElementById('newMenuInput').value = "";
-            loadMenu();
-            toggleMenuModal();
+            renderMenuEditArea();
         }
     }
 
-    async function deleteMenu(index) {
-        if(boards.length <= 1) return alert("최소 한 개는 있어야 합니다.");
-        boards.splice(index, 1);
-        await db.collection("settings").doc("menu").update({ list: boards });
+    async function saveMenuOrder() {
+        await db.collection("settings").doc("menu").set({ list: boards });
+        alert("순서가 저장되었습니다.");
         loadMenu();
         toggleMenuModal();
     }
 
-    // 게시판 데이터 로직
-    async function showList() {
+    // 게시판 핵심 로직
+    async function showList(search = "") {
         hideAll();
         document.getElementById('listView').classList.remove('hidden');
         const tbody = document.getElementById('postTableBody');
         tbody.innerHTML = "<tr><td colspan='4'>로딩 중...</td></tr>";
 
-        const snapshot = await db.collection("boards").doc(currentBoard).collection("posts").orderBy("timestamp", "desc").get();
+        let snapshot = await db.collection("boards").doc(currentBoard).collection("posts").orderBy("timestamp", "desc").get();
         tbody.innerHTML = "";
-        let i = snapshot.size;
+        
+        let filtered = [];
         snapshot.forEach(doc => {
             const data = doc.data();
+            if(!search || data.title.includes(search) || data.content.includes(search)) {
+                filtered.push({id: doc.id, ...data});
+            }
+        });
+
+        if(filtered.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>결과가 없습니다.</td></tr>";
+            return;
+        }
+
+        filtered.forEach((data, i) => {
             const tr = document.createElement('tr');
-            tr.onclick = () => showDetail(doc.id, data);
-            tr.innerHTML = `<td>${i--}</td><td>${data.title}</td><td>${data.author}</td><td>${data.dateShort}</td>`;
+            tr.onclick = () => showDetail(data.id, data);
+            tr.innerHTML = `<td>${filtered.length - i}</td><td>${data.title}</td><td>${data.author}</td><td>${data.dateShort}</td>`;
             tbody.appendChild(tr);
         });
     }
 
+    function searchPosts() {
+        const query = document.getElementById('searchInput').value.trim();
+        showList(query);
+    }
+
     async function savePost() {
         const title = document.getElementById('postTitleInput').value.trim();
-        const author = document.getElementById('postAuthorInput').value.trim() || "익명";
         const content = document.getElementById('postContentInput').value.trim();
         const editId = document.getElementById('editId').value;
 
-        if(!title || !content) return alert("내용을 입력하세요.");
+        if(!title || !content) return alert("제목과 내용을 입력하세요.");
 
         const now = new Date();
         const dateShort = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
-        const postData = { title, author, content, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+        const postData = { 
+            title, 
+            author: currentUserEmail, // 로그인한 계정으로 고정
+            content, 
+            dateShort, 
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+        };
 
         if(editId) {
             await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
@@ -297,16 +355,15 @@
     function showEditor(id = null, data = null) {
         hideAll();
         document.getElementById('editorView').classList.remove('hidden');
+        document.getElementById('displayAuthor').innerText = currentUserEmail;
         if(id) {
             document.getElementById('editorTitle').innerText = "글 수정";
             document.getElementById('editId').value = id;
-            document.getElementById('postAuthorInput').value = data.author;
             document.getElementById('postTitleInput').value = data.title;
             document.getElementById('postContentInput').value = data.content;
         } else {
             document.getElementById('editorTitle').innerText = "새 글 작성";
             document.getElementById('editId').value = "";
-            document.getElementById('postAuthorInput').value = "";
             document.getElementById('postTitleInput').value = "";
             document.getElementById('postContentInput').value = "";
         }
