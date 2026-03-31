@@ -61,6 +61,10 @@
         .search-bar { display: flex; gap: 5px; margin-top: 20px; }
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
+        /* 로딩 중일 때 화면 깜빡임 방지 */
+        #mainApp.loading { visibility: hidden; }
+        #loginOverlay.loading { display: none; }
+
         /* 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
         .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-height: 85vh; overflow-y: auto; }
@@ -217,21 +221,27 @@
     function handleLogout() { auth.signOut(); }
 
     auth.onAuthStateChanged(async (user) => {
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        
         if (user) {
             currentUserEmail = user.email;
             document.getElementById('navUserEmail').innerText = user.email;
             const userDoc = await db.collection("users").doc(user.email).get();
             currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
             document.getElementById('navUserLevel').innerText = currentUserLevel;
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+            // 로그인 확인 즉시 화면 교체
+            loginOverlay.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+
             if (ADMIN_EMAILS.includes(user.email)) {
                 document.getElementById('adminMenuBtn').classList.remove('hidden');
             }
             loadMenu();
         } else {
-            document.getElementById('loginOverlay').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
+            // 로그아웃 상태일 때만 로그인창 표시
+            loginOverlay.classList.remove('hidden');
+            mainApp.classList.add('hidden');
         }
     });
 
