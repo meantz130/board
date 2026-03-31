@@ -21,8 +21,18 @@
         .hidden { display: none !important; }
         button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
 
-        /* 로그인 */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        /* 초기 상태: 로딩 레이어 제외하고 모두 숨김 (자바스크립트 제어를 위해 !important 제거) */
+        #loginOverlay, #mainApp { display: none; }
+
+        /* 로딩 화면 */
+        #loadingLayer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--dark-bg); display: flex; justify-content: center; 
+            align-items: center; color: white; z-index: 9999; font-size: 1.2rem;
+        }
+
+        /* 로그인 카드 */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); justify-content: center; align-items: center; z-index: 2000; }
         .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
         .login-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; font-weight: bold; }
@@ -39,6 +49,7 @@
         .user-info-box { font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; }
         .user-info-box b { color: var(--accent-color); }
         
+        /* 채팅 버튼 (화이트 & 블랙) */
         .btn-chat { width: 100%; padding: 10px; background: #ffffff; color: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 4px; font-weight: bold; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
         .btn-chat:hover { background: #f0f0f0; }
         .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; margin-top: 10px; }
@@ -47,27 +58,17 @@
         .content-wrapper { width: 100%; max-width: 900px; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
 
-        /* 테이블 */
+        /* 테이블 및 기타 스타일 (기존과 동일) */
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         th { background: #f9f9f9; font-size: 0.85rem; color: #777; }
         .col-num { width: 50px; text-align: center; }
-        .col-title { width: auto; }
         .col-author { width: 120px; }
         .col-date { width: 100px; text-align: center; }
-
         .btn-main { background: var(--dark-bg); color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; }
         .btn-sub { background: #eee; color: #333; padding: 10px 20px; border: none; border-radius: 4px; }
         .search-bar { display: flex; gap: 5px; margin-top: 20px; }
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-
-        /* 기존 style 태그 안에 추가 또는 수정 */
-        #loginOverlay, #mainApp {
-            display: none !important; /* 처음에는 둘 다 완전히 숨김 */
-        }
-
-        /* 로딩 중임을 알리는 스타일 (선택 사항) */
-        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; display: flex; justify-content: center; align-items: center; color: white; z-index: 3000; }
 
         /* 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
@@ -79,9 +80,7 @@
 </head>
 <body>
 
-<div id="loadingLayer" class="loading-screen">잠시만 기다려 주세요...</div>
-<div id="loginOverlay"> ... </div>
-<div id="mainApp"> ... </div>
+<div id="loadingLayer">잠시만 기다려 주세요...</div>
 
 <div id="loginOverlay">
     <div class="login-card">
@@ -93,7 +92,7 @@
     </div>
 </div>
 
-<div id="mainApp" class="hidden">
+<div id="mainApp">
     <nav>
         <h3>MY BOARD</h3>
         <ul id="menuList"></ul>
@@ -212,11 +211,41 @@
     let currentUserEmail = "";
     let currentUserLevel = 0;
 
+    // 인증 상태 감시 (핵심: 새로고침 대응)
+    auth.onAuthStateChanged(async (user) => {
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loadingLayer = document.getElementById('loadingLayer');
+
+        // 일단 모든 화면 가림
+        loginOverlay.style.display = 'none';
+        mainApp.style.display = 'none';
+
+        if (user) {
+            currentUserEmail = user.email;
+            document.getElementById('navUserEmail').innerText = user.email;
+            
+            const userDoc = await db.collection("users").doc(user.email).get();
+            currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
+            document.getElementById('navUserLevel').innerText = currentUserLevel;
+
+            mainApp.style.display = 'flex'; // 메인 화면 노출
+            
+            if (ADMIN_EMAILS.includes(user.email)) {
+                document.getElementById('adminMenuBtn').classList.remove('hidden');
+            }
+            await loadMenu();
+        } else {
+            loginOverlay.style.display = 'flex'; // 로그인 화면 노출
+        }
+
+        // 마지막에 로딩 화면 제거
+        if (loadingLayer) loadingLayer.style.display = 'none';
+    });
+
     function openChatPopup() {
-        const url = 'chat.html'; 
-        const name = 'MeantzChat';
         const specs = 'width=400,height=600,left=100,top=100,menubar=no,status=no,toolbar=no';
-        window.open(url, name, specs);
+        window.open('chat.html', 'MeantzChat', specs);
     }
 
     function handleLogin() {
@@ -226,37 +255,8 @@
             document.getElementById('loginError').innerText = "아이디/비밀번호 오류입니다.";
         });
     }
+
     function handleLogout() { auth.signOut(); }
-
-    auth.onAuthStateChanged(async (user) => {
-        const loginOverlay = document.getElementById('loginOverlay');
-        const mainApp = document.getElementById('mainApp');
-        const loadingLayer = document.getElementById('loadingLayer');
-        // 1. 일단 로딩 화면을 숨김
-        if (loadingLayer) loadingLayer.style.display = 'none';
-        
-        if (user) {
-            // 로그인 된 경우
-            currentUserEmail = user.email;
-            document.getElementById('navUserEmail').innerText = user.email;
-            // 유저 정보 로드 (User Summary 등에 기반한 기존 로직)
-            const userDoc = await db.collection("users").doc(user.email).get();
-            currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
-
-            loginOverlay.style.setProperty('display', 'none', 'important');
-            mainApp.classList.remove('hidden');
-            mainApp.style.display = 'flex'; // 메인 앱 표시
-
-            if (ADMIN_EMAILS.includes(user.email)) {
-                document.getElementById('adminMenuBtn').classList.remove('hidden');
-            }
-            loadMenu();
-        } else {
-            // 로그아웃 상태일 때만 로그인창 표시
-            mainApp.style.setProperty('display', 'none', 'important');
-            loginOverlay.style.display = 'flex'; // 로그인 창 표시
-        }
-    });
 
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
@@ -442,7 +442,10 @@
         }
     }
 
-    function hideAll() { ['listView', 'editorView', 'detailView'].forEach(id => document.getElementById(id).classList.add('hidden')); }
+    function hideAll() { ['listView', 'editorView', 'detailView'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    }); }
 </script>
 </body>
 </html>
