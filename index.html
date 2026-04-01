@@ -35,7 +35,20 @@
         .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; font-weight: bold; }
 
         #mainApp { display: flex; min-height: 100vh; }
-        nav { width: var(--sidebar-width); background: var(--dark-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; }
+        
+        /* [모바일 대응] 사이드바 및 레이아웃 수정 */
+        nav { 
+            width: var(--sidebar-width); 
+            background: var(--dark-bg); 
+            color: #ccc; 
+            position: fixed; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1001;
+            transition: transform 0.3s ease; /* 슬라이드 애니메이션 */
+        }
+        
         nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid #333; margin: 0; }
         nav ul { list-style: none; padding: 0; flex-grow: 1; margin: 0; overflow-y: auto; }
         nav ul li { padding: 15px 25px; transition: 0.2s; font-size: 14px; }
@@ -49,9 +62,35 @@
         .btn-chat:hover { background: #f0f0f0; }
         .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; margin-top: 10px; }
 
-        main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; }
+        main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; transition: margin-left 0.3s ease; }
         .content-wrapper { width: 100%; max-width: 900px; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+
+        /* 모바일용 상단 바 (헤더) */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: 50px;
+            background: var(--dark-bg);
+            color: white;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        .menu-toggle-btn {
+            background: none; border: none; color: white; font-size: 24px; padding: 0; margin-right: 15px;
+        }
+
+        /* 모바일 메뉴 오버레이 */
+        #mobileOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -64,7 +103,6 @@
         .search-bar { display: flex; gap: 5px; margin-top: 20px; }
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
-        /* 공지사항 스타일 추가 */
         .notice-row { background-color: #fff9f9 !important; font-weight: bold; }
         .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 5px; vertical-align: middle; }
 
@@ -73,6 +111,17 @@
         .item-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
         .tab-btn { padding: 5px 10px; border: 1px solid #ddd; background: #fff; cursor:pointer; }
         .tab-btn.active { background: var(--dark-bg); color: white; }
+
+        /* [미디어 쿼리] 모바일 환경 설정 */
+        @media screen and (max-width: 768px) {
+            nav { transform: translateX(-100%); } /* 메뉴 숨김 */
+            nav.open { transform: translateX(0); } /* 메뉴 열림 */
+            main { margin-left: 0; padding-top: 70px; }
+            .mobile-header { display: flex; }
+            .col-author, .col-date { display: none; } /* 모바일에서 작성자/날짜 숨김(선택사항) */
+            th.col-author, th.col-date { display: none; }
+            .card { padding: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -89,9 +138,16 @@
     </div>
 </div>
 
+<div class="mobile-header" id="mobileHeader">
+    <button class="menu-toggle-btn" onclick="toggleMobileMenu()">☰</button>
+    <span style="font-weight: bold;">Meantz 놀이터</span>
+</div>
+
+<div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
 <div id="mainApp">
-    <nav>
-        <h3>MY BOARD</h3>
+    <nav id="sidebar">
+        <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
         <ul id="menuList"></ul>
         <div class="nav-footer">
             <div class="user-info-box">
@@ -198,6 +254,14 @@
 </div>
 
 <script>
+    // [자바스크립트 추가] 모바일 메뉴 토글 함수
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.style.display = isOpen ? 'block' : 'none';
+    }
+
     const ADMIN_EMAILS = ["오민택@aa.bb"]; 
 
     const firebaseConfig = {
@@ -222,9 +286,11 @@
         const loginOverlay = document.getElementById('loginOverlay');
         const mainApp = document.getElementById('mainApp');
         const loadingLayer = document.getElementById('loadingLayer');
+        const mobileHeader = document.getElementById('mobileHeader');
 
         loginOverlay.style.display = 'none';
         mainApp.style.display = 'none';
+        mobileHeader.style.display = 'none';
 
         if (user) {
             currentUserEmail = user.email;
@@ -235,6 +301,8 @@
             document.getElementById('navUserLevel').innerText = currentUserLevel;
 
             mainApp.style.display = 'flex'; 
+            // 로그인 완료 후 모바일이면 헤더 노출
+            if(window.innerWidth <= 768) mobileHeader.style.display = 'flex';
             
             if (ADMIN_EMAILS.includes(user.email)) {
                 document.getElementById('adminMenuBtn').classList.remove('hidden');
@@ -278,6 +346,8 @@
             li.onclick = () => {
                 if(currentUserLevel < b.level) return alert(`이 게시판은 레벨 ${b.level} 이상만 입장 가능합니다.`);
                 switchBoard(b.name);
+                // 모바일에서 게시판 클릭 시 메뉴 닫기
+                if(window.innerWidth <= 768) toggleMobileMenu();
             };
             list.appendChild(li);
         });
@@ -382,7 +452,6 @@
             }
         });
 
-        // 공지글 최상단 정렬
         allPosts.sort((a, b) => (a.isNotice === b.isNotice) ? 0 : a.isNotice ? -1 : 1);
 
         if(allPosts.length === 0) {
@@ -456,7 +525,6 @@
         document.getElementById('editorView').classList.remove('hidden');
         document.getElementById('displayAuthor').innerText = currentUserEmail;
 
-        // 관리자일 때만 공지 체크박스 노출
         const noticeArea = document.getElementById('noticeArea');
         if (ADMIN_EMAILS.includes(currentUserEmail)) noticeArea.classList.remove('hidden');
         else noticeArea.classList.add('hidden');
