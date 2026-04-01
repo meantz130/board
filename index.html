@@ -21,7 +21,9 @@
         .hidden { display: none !important; }
         button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
 
-        #loginOverlay, #mainApp { display: none; }
+        /* 초기 상태 설정 */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        #mainApp { display: none; min-height: 100vh; }
 
         #loadingLayer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -29,13 +31,10 @@
             align-items: center; color: white; z-index: 9999; font-size: 1.2rem;
         }
 
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); justify-content: center; align-items: center; z-index: 2000; }
         .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
         .login-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .login-card button { width: 100%; padding: 12px; background: var(--dark-bg); color: white; border: none; border-radius: 6px; font-weight: bold; }
 
-        #mainApp { display: flex; min-height: 100vh; }
-        
         nav { 
             width: var(--sidebar-width); 
             background: var(--dark-bg); 
@@ -57,36 +56,17 @@
         .user-info-box { font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; }
         .user-info-box b { color: var(--accent-color); }
         
-        .btn-chat { width: 100%; padding: 10px; background: #ffffff; color: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 4px; font-weight: bold; margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
+        .btn-chat { width: 100%; padding: 10px; background: #ffffff; color: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 4px; font-weight: bold; margin-bottom: 5px; cursor: pointer; }
         .logout-btn { width: 100%; padding: 8px; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; border-radius: 4px; margin-top: 10px; }
 
-        main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; transition: margin-left 0.3s ease; }
+        main { flex: 1; margin-left: var(--sidebar-width); padding: 40px 20px; display: flex; justify-content: center; }
         .content-wrapper { width: 100%; max-width: 900px; }
         .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
 
-        .mobile-header {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            height: 50px;
-            background: var(--dark-bg);
-            color: white;
-            align-items: center;
-            padding: 0 15px;
-            box-sizing: border-box;
-            z-index: 1000;
-        }
-        .menu-toggle-btn {
-            background: none; border: none; color: white; font-size: 24px; padding: 0; margin-right: 15px;
-        }
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: var(--dark-bg); color: white; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; }
+        .menu-toggle-btn { background: none; border: none; color: white; font-size: 24px; }
 
-        #mobileOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
+        #mobileOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -100,12 +80,13 @@
         .search-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
         .notice-row { background-color: #fff9f9 !important; font-weight: bold; }
-        .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 5px; vertical-align: middle; }
+        .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 5px; }
 
+        /* 모달 스타일 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
         .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-height: 85vh; overflow-y: auto; }
         .item-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-        .tab-btn { padding: 5px 10px; border: 1px solid #ddd; background: #fff; cursor:pointer; }
+        .tab-btn { padding: 5px 10px; border: 1px solid #ddd; background: #fff; }
         .tab-btn.active { background: var(--dark-bg); color: white; }
 
         @media screen and (max-width: 768px) {
@@ -114,7 +95,6 @@
             main { margin-left: 0; padding-top: 70px; }
             .mobile-header { display: flex; }
             .col-author, .col-date { display: none; }
-            th.col-author, th.col-date { display: none; }
             .card { padding: 15px; }
         }
     </style>
@@ -135,7 +115,7 @@
 
 <div class="mobile-header" id="mobileHeader">
     <button class="menu-toggle-btn" onclick="toggleMobileMenu()">☰</button>
-    <span style="font-weight: bold;">Meantz 놀이터</span>
+    <span style="font-weight: bold; margin-left: 10px;">Meantz 놀이터</span>
 </div>
 
 <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
@@ -173,20 +153,20 @@
                     </table>
                 </div>
                 <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="제목 또는 내용 검색..." onkeyup="if(window.event.keyCode==13) searchPosts()">
+                    <input type="text" id="searchInput" placeholder="제목 또는 내용 검색...">
                     <button class="btn-sub" onclick="searchPosts()">검색</button>
                     <button id="writeBtn" class="btn-main" onclick="showEditor()" style="margin-left:auto;">글쓰기</button>
                 </div>
             </div>
 
             <div id="editorView" class="hidden">
-                <div class="board-header"><h2 id="editorTitle">작성</h2></div>
+                <div class="board-header"><h2>작성</h2></div>
                 <div class="card">
                     <input type="hidden" id="editId">
                     <p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">작성자: <b id="displayAuthor"></b></p>
                     <div style="display:flex; gap:20px; margin-bottom: 10px; font-size: 14px;">
-                        <label style="cursor: pointer;"><input type="checkbox" id="htmlCheck"> HTML 사용</label>
-                        <label id="noticeArea" class="hidden" style="cursor: pointer; color: var(--accent-color); font-weight: bold;">
+                        <label><input type="checkbox" id="htmlCheck"> HTML 사용</label>
+                        <label id="noticeArea" class="hidden" style="color: var(--accent-color); font-weight: bold;">
                             <input type="checkbox" id="noticeCheck"> 📌 공지사항 고정
                         </label>
                     </div>
@@ -217,14 +197,32 @@
     </main>
 </div>
 
-<script>
-    function toggleMobileMenu() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobileOverlay');
-        const isOpen = sidebar.classList.toggle('open');
-        overlay.style.display = isOpen ? 'block' : 'none';
-    }
+<div id="menuModal" class="modal hidden">
+    <div class="modal-content">
+        <div style="margin-bottom:15px;">
+            <button class="tab-btn active" id="tab1" onclick="switchTab(1)">메뉴/등급 설정</button>
+            <button class="tab-btn" id="tab2" onclick="switchTab(2)">사용자 관리</button>
+        </div>
+        <div id="tabContent1">
+            <div id="menuEditArea"></div>
+            <hr>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="newMenuInput" placeholder="새 게시판" style="flex:1; padding:5px;">
+                <button onclick="addMenu()">추가</button>
+            </div>
+        </div>
+        <div id="tabContent2" class="hidden">
+            <input type="email" id="userEmailUpdate" placeholder="사용자 이메일" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
+            <input type="number" id="userLevelUpdate" placeholder="등급 (0~9)" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;">
+            <button class="btn-main" style="width:100%;" onclick="updateUserLevel()">등급 적용</button>
+        </div>
+        <hr style="margin-top:20px;">
+        <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">설정 최종 저장</button>
+        <button class="btn-sub" style="width:100%; margin-top:5px;" onclick="toggleMenuModal()">닫기</button>
+    </div>
+</div>
 
+<script>
     const ADMIN_EMAILS = ["오민택@aa.bb"]; 
 
     const firebaseConfig = {
@@ -245,6 +243,7 @@
     let currentUserEmail = "";
     let currentUserLevel = 0;
 
+    // 로그인 상태 감지 및 UI 전환 로직 수정
     auth.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
         const mainApp = document.getElementById('mainApp');
@@ -254,32 +253,40 @@
         if (user) {
             currentUserEmail = user.email;
             document.getElementById('navUserEmail').innerText = user.email;
+            
             const userDoc = await db.collection("users").doc(user.email).get();
             currentUserLevel = userDoc.exists ? userDoc.data().level : 0;
             document.getElementById('navUserLevel').innerText = currentUserLevel;
+
+            loginOverlay.style.display = 'none';
             mainApp.style.display = 'flex'; 
             if(window.innerWidth <= 768) mobileHeader.style.display = 'flex';
             if (ADMIN_EMAILS.includes(user.email)) document.getElementById('adminMenuBtn').classList.remove('hidden');
             await loadMenu();
         } else {
             loginOverlay.style.display = 'flex';
+            mainApp.style.display = 'none';
+            mobileHeader.style.display = 'none';
         }
         if (loadingLayer) loadingLayer.style.display = 'none';
     });
 
-    function openChatPopup() {
-        window.open('chat.html', 'MeantzChat', 'width=400,height=600');
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.style.display = isOpen ? 'block' : 'none';
     }
 
     function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const pw = document.getElementById('loginPw').value;
-        auth.signInWithEmailAndPassword(email, pw).catch(() => {
+        auth.signInWithEmailAndPassword(email, pw).catch(e => {
             document.getElementById('loginError').innerText = "아이디/비밀번호 오류입니다.";
         });
     }
 
-    function handleLogout() { auth.signOut(); location.reload(); }
+    function handleLogout() { auth.signOut().then(() => location.reload()); }
 
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
@@ -288,7 +295,6 @@
         if(!currentBoard) switchBoard(boards[0].name);
     }
 
-    // [수정] 등급 상관없이 모든 게시판 입장 가능하게 변경
     function renderMenu() {
         const list = document.getElementById('menuList');
         list.innerHTML = "";
@@ -311,12 +317,46 @@
         showList();
     }
 
-    // [수정] 목록 조회 시 글쓰기 권한에 따라 버튼 노출 결정
+    // 사이트 관리 모달 관련 함수
+    function toggleMenuModal() {
+        const modal = document.getElementById('menuModal');
+        modal.classList.toggle('hidden');
+        if(!modal.classList.contains('hidden')) renderMenuEditArea();
+    }
+
+    function switchTab(n) {
+        document.getElementById('tabContent1').classList.toggle('hidden', n !== 1);
+        document.getElementById('tabContent2').classList.toggle('hidden', n !== 2);
+        document.getElementById('tab1').classList.toggle('active', n === 1);
+        document.getElementById('tab2').classList.toggle('active', n === 2);
+    }
+
+    function renderMenuEditArea() {
+        const area = document.getElementById('menuEditArea');
+        area.innerHTML = "";
+        boards.forEach((b, i) => {
+            const div = document.createElement('div');
+            div.className = "item-row";
+            div.innerHTML = `
+                <div style="flex:1;"><b>${b.name}</b></div>
+                <div style="margin-right:10px;">Lv <input type="number" value="${b.level}" onchange="boards[${i}].level=parseInt(this.value)" style="width:40px;"></div>
+                <button onclick="moveMenu(${i},-1)">▲</button><button onclick="moveMenu(${i},1)">▼</button><button onclick="deleteMenu(${i})">X</button>
+            `;
+            area.appendChild(div);
+        });
+    }
+
+    async function saveAllSettings() {
+        await db.collection("settings").doc("menu").set({ list: boards });
+        alert("저장되었습니다.");
+        loadMenu();
+        toggleMenuModal();
+    }
+
     async function showList(search = "") {
         hideAll();
         document.getElementById('listView').classList.remove('hidden');
         
-        // 글쓰기 버튼 권한 체크
         const boardCfg = boards.find(b => b.name === currentBoard);
         const writeBtn = document.getElementById('writeBtn');
         if(boardCfg && currentUserLevel < boardCfg.level) writeBtn.classList.add('hidden');
@@ -331,43 +371,27 @@
             const data = doc.data();
             if(!search || data.title.includes(search) || data.content.includes(search)) allPosts.push({id: doc.id, ...data});
         });
-        allPosts.sort((a, b) => (a.isNotice === b.isNotice) ? 0 : a.isNotice ? -1 : 1);
-        if(allPosts.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>글이 없습니다.</td></tr>";
-            return;
-        }
+        allPosts.sort((a,b) => (a.isNotice === b.isNotice) ? 0 : a.isNotice ? -1 : 1);
+        
         allPosts.forEach((data, i) => {
             const tr = document.createElement('tr');
             tr.onclick = () => showDetail(data.id, data);
-            if (data.isNotice) tr.className = "notice-row";
-            tr.innerHTML = `
-                <td class="col-num">${data.isNotice ? '📌' : allPosts.length - i}</td>
-                <td class="col-title">${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}${data.title}</td>
-                <td class="col-author">${data.author.split('@')[0]}</td>
-                <td class="col-date">${data.dateShort}</td>
-            `;
+            if(data.isNotice) tr.className = "notice-row";
+            tr.innerHTML = `<td class="col-num">${data.isNotice?'📌':allPosts.length-i}</td><td>${data.isNotice?'[공지] ':''}${data.title}</td><td>${data.author.split('@')[0]}</td><td>${data.dateShort}</td>`;
             tbody.appendChild(tr);
         });
     }
 
-    function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
-
-    // [수정] 저장 시 최종 레벨 권한 확인
     async function savePost() {
         const boardCfg = boards.find(b => b.name === currentBoard);
         if(boardCfg && currentUserLevel < boardCfg.level) return alert("권한이 없습니다.");
-
         const title = document.getElementById('postTitleInput').value.trim();
         const content = document.getElementById('postContentInput').value.trim();
-        const isHTML = document.getElementById('htmlCheck').checked;
-        const isNotice = document.getElementById('noticeCheck').checked;
         const editId = document.getElementById('editId').value;
-
-        if(!title || !content) return alert("내용을 입력하세요.");
+        if(!title || !content) return alert("입력하세요.");
+        
         const now = new Date();
-        const dateShort = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
-        const postData = { title, author: currentUserEmail, content, isHTML, isNotice, dateShort, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
-
+        const postData = { title, author: currentUserEmail, content, dateShort: `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
         if(editId) await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
         else await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
         showList();
@@ -377,49 +401,25 @@
         hideAll();
         document.getElementById('detailView').classList.remove('hidden');
         document.getElementById('viewTitle').innerText = data.title;
-        document.getElementById('viewMeta').innerText = `작성자: ${data.author} | 날짜: ${data.dateShort}`;
-        const viewContent = document.getElementById('viewContent');
-        if (data.isHTML) viewContent.innerHTML = data.content;
-        else viewContent.innerText = data.content;
-        
-        // 본인 글이거나 관리자일 때만 수정/삭제 노출 (선택사항)
+        document.getElementById('viewContent').innerText = data.content;
         const isOwner = data.author === currentUserEmail || ADMIN_EMAILS.includes(currentUserEmail);
         document.getElementById('editBtn').classList.toggle('hidden', !isOwner);
         document.getElementById('deleteBtn').classList.toggle('hidden', !isOwner);
-
         document.getElementById('editBtn').onclick = () => showEditor(id, data);
-        document.getElementById('deleteBtn').onclick = async () => {
-            if(confirm("삭제할까요?")) {
-                await db.collection("boards").doc(currentBoard).collection("posts").doc(id).delete();
-                showList();
-            }
-        };
+        document.getElementById('deleteBtn').onclick = async () => { if(confirm("삭제?")) { await db.collection("boards").doc(currentBoard).collection("posts").doc(id).delete(); showList(); }};
     }
 
-    function showEditor(id = null, data = null) {
+    function showEditor(id=null, data=null) {
         hideAll();
         document.getElementById('editorView').classList.remove('hidden');
         document.getElementById('displayAuthor').innerText = currentUserEmail;
-        const noticeArea = document.getElementById('noticeArea');
-        if (ADMIN_EMAILS.includes(currentUserEmail)) noticeArea.classList.remove('hidden');
-        else noticeArea.classList.add('hidden');
-
-        if(id) {
-            document.getElementById('editId').value = id;
-            document.getElementById('postTitleInput').value = data.title;
-            document.getElementById('postContentInput').value = data.content;
-            document.getElementById('htmlCheck').checked = data.isHTML || false;
-            document.getElementById('noticeCheck').checked = data.isNotice || false;
-        } else {
-            document.getElementById('editId').value = "";
-            document.getElementById('postTitleInput').value = "";
-            document.getElementById('postContentInput').value = "";
-            document.getElementById('htmlCheck').checked = false;
-            document.getElementById('noticeCheck').checked = false;
-        }
+        if(id) { document.getElementById('editId').value=id; document.getElementById('postTitleInput').value=data.title; document.getElementById('postContentInput').value=data.content; }
+        else { document.getElementById('editId').value=""; document.getElementById('postTitleInput').value=""; document.getElementById('postContentInput').value=""; }
     }
 
-    function hideAll() { ['listView', 'editorView', 'detailView'].forEach(id => document.getElementById(id).classList.add('hidden')); }
+    function hideAll() { ['listView','editorView','detailView'].forEach(id => document.getElementById(id).classList.add('hidden')); }
+    function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
+    function openChatPopup() { window.open('chat.html', 'MeantzChat', 'width=400,height=600'); }
 </script>
 </body>
 </html>
