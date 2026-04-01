@@ -2,23 +2,111 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>실시간 채팅</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        /* 스타일은 v2.0과 동일 (생략) */
-        body { font-family: 'Pretendard', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #ffffff; color: #000; }
-        header { background: #ffffff; color: #000; padding: 15px; text-align: center; font-weight: bold; border-bottom: 1px solid #eee; }
-        #presenceBar { background: #f9f9f9; padding: 8px 15px; font-size: 11px; color: #666; border-bottom: 1px solid #eee; }
-        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
-        .msg.mine { align-self: flex-end; background: #000; color: #fff; }
-        .msg.others { align-self: flex-start; background: #f1f1f1; color: #000; border: 1px solid #eee; }
-        .sender { font-size: 11px; margin-bottom: 4px; color: #888; }
-        .input-area { padding: 15px; background: #ffffff; display: flex; gap: 10px; border-top: 1px solid #eee; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; outline: none; }
-        button { padding: 0 20px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            background: #ffffff; 
+            color: #000;
+            /* 모바일에서 불필요한 스크롤 방지 */
+            overflow: hidden; 
+        }
+        header { 
+            background: #ffffff; 
+            color: #000; 
+            padding: 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            border-bottom: 1px solid #eee;
+            font-size: 1.1rem; /* 헤더 크기 소폭 키움 */
+        }
+        #presenceBar { 
+            background: #f9f9f9; 
+            padding: 8px 15px; 
+            font-size: 12px; /* 가독성을 위해 11px -> 12px */
+            color: #666; 
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #chatBox { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background-color: #f5f5f5; /* 채팅 영역 구분감 부여 */
+        }
+        .msg { 
+            max-width: 80%; 
+            padding: 12px 16px; /* 터치 영역 및 가독성 확보 */
+            border-radius: 12px; 
+            font-size: 15px; /* 모바일 표준 폰트 크기 */
+            line-height: 1.5; 
+            word-break: break-all;
+            position: relative;
+        }
+        .msg.mine { 
+            align-self: flex-end; 
+            background: #000; 
+            color: #fff; 
+            border-bottom-right-radius: 2px;
+        }
+        .msg.others { 
+            align-self: flex-start; 
+            background: #fff; 
+            color: #000; 
+            border: 1px solid #ddd; 
+            border-bottom-left-radius: 2px;
+        }
+        .sender { 
+            font-size: 11px; 
+            margin-bottom: 4px; 
+            color: #888; 
+        }
+        .input-area { 
+            padding: 10px 15px; 
+            background: #ffffff; 
+            display: flex; 
+            gap: 8px; 
+            border-top: 1px solid #eee;
+            /* 아이폰 하단 홈 바 영역 대응 */
+            padding-bottom: env(safe-area-inset-bottom, 10px); 
+        }
+        input { 
+            flex: 1; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            outline: none; 
+            font-size: 16px; /* 모바일 입력 시 자동 줌 방지 (16px 이상 권장) */
+        }
+        button { 
+            padding: 0 20px; 
+            background: #000; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        /* [미디어 쿼리] 화면이 작을 때의 추가 조정 */
+        @media (max-width: 480px) {
+            .msg { max-width: 85%; }
+            header { padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -26,11 +114,12 @@
     <div id="presenceBar">접속 중: <span id="userList">불러오는 중...</span></div>
     <div id="chatBox"></div>
     <div class="input-area">
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeyup="if(window.event.keyCode==13) sendChat()">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeyup="if(window.event.keyCode==13) sendChat()" inputmode="text">
         <button onclick="sendChat()">전송</button>
     </div>
 
     <script>
+        // Firebase 설정 및 기존 스크립트 로직은 그대로 유지됩니다.
         const firebaseConfig = {
             apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
             authDomain: "meantzboard.firebaseapp.com",
@@ -38,24 +127,24 @@
             storageBucket: "meantzboard.firebasestorage.app",
             messagingSenderId: "807743275828",
             appId: "1:807743275828:web:2effa72896931a2df15b61"
-    };
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         
         let userEmail = "";
-        let entryTime = new Date(); // 채팅방에 들어온 시점의 시간 저장
+        let entryTime = new Date();
 
         auth.onAuthStateChanged(user => {
             if(user) {
                 userEmail = user.email;
-                // 입장 시간 갱신 (서버 시간 오차를 고려해 약간의 여유를 둠)
                 entryTime = new Date(); 
                 enterRoom();
                 listenChat();
                 listenPresence();
             } else {
-                window.close();
+                // 모바일 웹앱 형태에서는 창 닫기 대신 로그아웃 처리가 나을 수 있습니다.
+                // window.close(); 
             }
         });
 
@@ -78,9 +167,11 @@
         }
 
         async function sendChat() {
-            const msg = document.getElementById('chatInput').value.trim();
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
             if(!msg) return;
-            document.getElementById('chatInput').value = "";
+            input.value = "";
+            input.focus(); // 전송 후 포커스 유지
             await db.collection("chats").add({
                 sender: userEmail,
                 text: msg,
@@ -89,21 +180,23 @@
         }
 
         function listenChat() {
-            // 핵심 변경: 본인의 entryTime보다 큰(이후인) 메시지만 가져옴
             db.collection("chats")
                 .where("timestamp", ">", entryTime) 
                 .orderBy("timestamp", "asc")
                 .onSnapshot(snapshot => {
                     const chatBox = document.getElementById('chatBox');
-                    // 'added'된 문서만 처리하거나 전체를 다시 그리도록 구성
                     snapshot.docChanges().forEach(change => {
                         if (change.type === "added") {
                             const data = change.doc.data();
                             const isMine = data.sender === userEmail;
                             const div = document.createElement('div');
                             div.className = `msg ${isMine ? 'mine' : 'others'}`;
+                            
+                            // 본인 글이 아닐 때만 보낸 사람 표시 (깔끔한 UI)
+                            const senderHtml = isMine ? '' : `<div class="sender">${data.sender.split('@')[0]}</div>`;
+                            
                             div.innerHTML = `
-                                <div class="sender">${data.sender}</div>
+                                ${senderHtml}
                                 <div>${data.text}</div>
                             `;
                             chatBox.appendChild(div);
