@@ -107,6 +107,15 @@
             padding: 10px 12px !important;
             vertical-align: middle;
         }
+
+        .board-tag { 
+            font-size: 10px; 
+            padding: 2px 5px; 
+            background: #eee; 
+            border-radius: 3px; 
+            margin-right: 5px; 
+            color: #666; 
+        }
     </style>
 </head>
 <body>
@@ -147,6 +156,23 @@
 
     <main>
         <div class="content-wrapper">
+            <div id="homeView" class="hidden">
+                <div class="board-header"><h2>🏠 홈 대시보드</h2></div>
+                <div class="card" style="padding:0; margin-bottom: 20px;">
+                    <table id="homePostTable">
+                        <thead>
+                            <tr>
+                                <th class="col-num">출처</th>
+                                <th class="col-title">최신 게시글 (공지 우선)</th>
+                                <th class="col-date">날짜</th>
+                            </tr>
+                        </thead>
+                        <tbody id="homeTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+            
             <div id="listView">
                 <div class="board-header"><h2 id="boardTitle">게시판</h2></div>
                 <div class="card" style="padding:0">
@@ -272,6 +298,7 @@
             if(window.innerWidth <= 768) mobileHeader.style.display = 'flex';
             if (ADMIN_EMAILS.includes(user.email)) document.getElementById('adminMenuBtn').classList.remove('hidden');
             await loadMenu();
+            showHome(); // 로그인 성공 시 첫 화면을 홈으로!
         } else {
             loginOverlay.style.display = 'flex';
             mainApp.style.display = 'none';
@@ -507,8 +534,64 @@
         toggleMenuModal();
     }
 
+    // 1. MY BOARD 클릭 시 홈으로 이동하도록 수정
+    document.querySelector('nav h3').onclick = () => {
+        showHome();
+        if(window.innerWidth <= 768) toggleMobileMenu();
+    };
+
+    // 2. 홈 화면 로직 (모든 게시판의 글을 통합)
+    async function showHome() {
+        hideAll();
+        currentBoard = ""; // 특정 게시판 선택 해제
+        document.getElementById('homeView').classList.remove('hidden');
+        const tbody = document.getElementById('homeTableBody');
+        tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>소식을 불러오는 중...</td></tr>";
+
+        let allIntegratedPosts = [];
+
+        // 모든 게시판(boards)에서 글을 가져옵니다.
+        for (const b of boards) {
+            const snap = await db.collection("boards").doc(b.name).collection("posts")
+                          .orderBy("timestamp", "desc").limit(10).get();
+            snap.forEach(doc => {
+              allIntegratedPosts.push({ id: doc.id, boardName: b.name, ...doc.data() });
+            });
+        }
+
+        // 정렬 규칙: 1. 공지사항 우선, 2. 최신 날짜순
+        allIntegratedPosts.sort((a, b) => {
+            if (a.isNotice !== b.isNotice) return a.isNotice ? -1 : 1;
+            return b.timestamp - a.timestamp;
+        });
+
+        // 상위 6개만 표기
+        const displayPosts = allIntegratedPosts.slice(0, 6);
+
+        tbody.innerHTML = "";
+        displayPosts.forEach(data => {
+            const tr = document.createElement('tr');
+            tr.onclick = () => {
+                currentBoard = data.boardName; // 해당 게시판으로 컨텍스트 변경
+                showDetail(data.id, data);
+            };
+        
+            if(data.isNotice) tr.className = "notice-row";
+
+            tr.innerHTML = `
+                <td class="col-num" style="width:70px;"><span class="board-tag">${data.boardName}</span></td>
+                <td class="col-title">
+                  ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
+                  ${data.title}
+                </td>
+                <td class="col-date">${data.dateShort}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
     function hideAll() { 
-        ['listView','editorView','detailView'].forEach(id => {
+        ['listView','editorView','detailView','homeView'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.add('hidden');
         }); 
