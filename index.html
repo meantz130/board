@@ -202,6 +202,7 @@
                     <p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">작성자: <b id="displayAuthor"></b></p>
                     <div style="display:flex; gap:20px; margin-bottom: 10px; font-size: 14px;">
                         <label><input type="checkbox" id="htmlCheck"> HTML 사용</label>
+                        <label><input type="checkbox" id="secretCheck"> 🔒 비밀글</label>
                         <label id="noticeArea" class="hidden" style="color: var(--accent-color); font-weight: bold; cursor: pointer;">
                             <input type="checkbox" id="noticeCheck"> 📌 공지사항 고정
                         </label>
@@ -377,6 +378,19 @@
             tr.onclick = () => showDetail(data.id, data);
             if(data.isNotice) tr.className = "notice-row";
 
+            // 목록에서 제목을 표시할 때 이 로직을 적용하세요.
+            const isOwner = data.author === currentUserEmail;
+            const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
+
+            let displayTitle = data.title;
+            if (data.isSecret) {
+                displayTitle = "🔒 비밀글입니다.";
+                // 작성자나 관리자라면 제목 뒤에 실제 제목을 괄호로 보여줄 수도 있습니다.
+                if (isOwner || isAdmin) {
+                    displayTitle = `🔒 ${data.title} (비밀글)`;
+                }
+            }
+
             // 본문 미리보기 텍스트 생성 (HTML 태그 제거 및 길이 제한)
             let pureText = data.content.replace(/<[^>]*>?/gm, ''); // HTML 태그 제거
             let previewText = pureText.substring(0, 60) + (pureText.length > 60 ? "..." : "");
@@ -412,11 +426,12 @@
 
         if(!title || !content) return alert("내용을 입력하세요.");
         const now = new Date();
+        const isSecret = document.getElementById('secretCheck').checked; // 추가
         const postData = { 
             title, author: currentUserEmail, content, 
-            isHTML, isNotice, 
-            dateShort: `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`, 
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+            isHTML, isNotice, isSecret, // isSecret 추가
+            dateShort: `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`,  
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()  
         };
 
         if(editId) await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
@@ -440,12 +455,14 @@
             document.getElementById('postContentInput').value = data.content;
             document.getElementById('htmlCheck').checked = data.isHTML || false;
             document.getElementById('noticeCheck').checked = data.isNotice || false;
+            document.getElementById('secretCheck').checked = data.isSecret || false;
         } else {
             document.getElementById('editId').value = "";
             document.getElementById('postTitleInput').value = "";
             document.getElementById('postContentInput').value = "";
             document.getElementById('htmlCheck').checked = false;
             document.getElementById('noticeCheck').checked = false;
+            document.getElementById('secretCheck').checked = false;
         }
     }
 
@@ -470,6 +487,11 @@
                 showList();
             }
         };
+        // 비밀글 권한 체크
+        if (data.isSecret && !isOwner && !isAdmin) {
+            alert("비밀글은 작성자와 관리자만 볼 수 있습니다.");
+            return;
+        }
     }
 
     // 사이트 관리 모달 관련 함수들
@@ -577,6 +599,17 @@
             };
         
             if(data.isNotice) tr.className = "notice-row";
+
+            const isOwner = data.author === currentUserEmail;
+            const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
+
+            let displayTitle = data.title;
+            if (data.isSecret) {
+                displayTitle = "🔒 비밀글입니다.";
+                if (isOwner || isAdmin) {
+                    displayTitle = `🔒 ${data.title} (비밀글)`;
+                }
+            }
 
             tr.innerHTML = `
                 <td class="col-num" style="width:70px;"><span class="board-tag">${data.boardName}</span></td>
