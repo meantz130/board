@@ -387,7 +387,7 @@
                 // 비밀글일 경우
                 if (isOwner || isAdmin) {
                     // 작성자나 관리자에게는 실제 제목과 함께 상태 표시
-                    displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:0.8em; font-weight:normal;">(비밀글)</span>`;
+                    displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:12px; font-weight:normal;">(비밀글)</span>`;
                 } else {
                     // 일반 유저에게는 내용을 숨김
                     displayTitle = `<span style="color:#999;">🔒 비밀글입니다.</span>`;
@@ -403,7 +403,7 @@
                 <td class="col-title">
                     <div>
                         ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
-                        <span style="font-weight:600;">${data.title}</span>
+                        <span style="font-weight:600;">${displayTitle}</span>
                     </div>
                     <div class="post-preview">${previewText}</div>
                 </td>
@@ -646,7 +646,7 @@
                 <td class="col-num" style="width:70px;"><span class="board-tag">${data.boardName}</span></td>
                 <td class="col-title">
                   ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
-                  ${data.title}
+                  ${displayTitle}
                 </td>
                 <td class="col-date">${data.dateShort}</td>
             `;
