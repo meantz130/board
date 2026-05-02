@@ -74,6 +74,9 @@
 
         .notice-row { background-color: #fff9f9 !important; font-weight: bold; }
         .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 5px; }
+        
+        /* New 뱃지 스타일 추가 */
+        .new-badge { background: #ff9800; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 5px; font-weight: bold; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
         .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-height: 85vh; overflow-y: auto; }
@@ -90,32 +93,13 @@
             .card { padding: 15px; }
         }
 
-            /* 게시글 미리보기 스타일 추가 */
-        .post-preview {
-            display: block;
-            font-size: 12px;
-            color: #888;
-            margin-top: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 100%;
-        }
+        /* 게시글 미리보기 스타일 추가 */
+        .post-preview { display: block; font-size: 12px; color: #888; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
     
         /* 제목 열의 높이를 조금 더 확보 */
-        .col-title {
-            padding: 10px 12px !important;
-            vertical-align: middle;
-        }
+        .col-title { padding: 10px 12px !important; vertical-align: middle; }
 
-        .board-tag { 
-            font-size: 10px; 
-            padding: 2px 5px; 
-            background: #eee; 
-            border-radius: 3px; 
-            margin-right: 5px; 
-            color: #666; 
-        }
+        .board-tag { font-size: 10px; padding: 2px 5px; background: #eee; border-radius: 3px; margin-right: 5px; color: #666; }
     </style>
 </head>
 <body>
@@ -382,6 +366,11 @@
             const isOwner = data.author === currentUserEmail;
             const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
 
+            const now = Date.now();
+            const postTime = data.timestamp ? data.timestamp.toMillis() : now; // 생성 직후 pending 상태 에러 방지
+            const isNew = (now - postTime) < (24 * 60 * 60 * 1000); // 24시간(ms) 이내인지 확인
+            const newBadgeHtml = isNew ? '<span class="new-badge">N</span>' : '';
+
             let displayTitle = data.title;
             if (data.isSecret) {
                 // 비밀글일 경우
@@ -397,12 +386,14 @@
             // 본문 미리보기 텍스트 생성 (HTML 태그 제거 및 길이 제한)
             let pureText = data.content.replace(/<[^>]*>?/gm, ''); // HTML 태그 제거
             let previewText = pureText.substring(0, 60) + (pureText.length > 60 ? "..." : "");
-            
+        
+            // newBadgeHtml 변수를 제목 앞에 추가
             tr.innerHTML = `
                 <td class="col-num">${data.isNotice ? '📌' : allPosts.length - i}</td>
                 <td class="col-title">
                     <div>
                         ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
+                        ${newBadgeHtml}
                         <span style="font-weight:600;">${displayTitle}</span>
                     </div>
                     <div class="post-preview">${previewText}</div>
@@ -630,6 +621,11 @@
             const isOwner = data.author === currentUserEmail;
             const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
 
+            const now = Date.now();
+            const postTime = data.timestamp ? data.timestamp.toMillis() : now;
+            const isNew = (now - postTime) < (24 * 60 * 60 * 1000);
+            const newBadgeHtml = isNew ? '<span class="new-badge">N</span>' : '';
+
             let displayTitle = data.title;
             if (data.isSecret) {
                 // 비밀글일 경우
@@ -642,10 +638,12 @@
                 }
             }
 
+            // newBadgeHtml 변수를 제목 앞에 추가
             tr.innerHTML = `
                 <td class="col-num" style="width:70px;"><span class="board-tag">${data.boardName}</span></td>
                 <td class="col-title">
                   ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
+                  ${newBadgeHtml}
                   ${displayTitle}
                 </td>
                 <td class="col-date">${data.dateShort}</td>
