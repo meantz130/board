@@ -110,8 +110,9 @@
     <div class="login-card">
         <h2>Meantz 놀이터</h2>
         <input type="email" id="loginEmail" placeholder="아이디(이메일)">
-        <input type="password" id="loginPw" placeholder="비밀번호">
-        <button onclick="handleLogin()">로그인</button>
+        <input type="password" id="loginPw" placeholder="비밀번호">        
+        <button onclick="handleLogin()" style="margin-bottom: 8px;">로그인</button>
+        <button onclick="handleSignup()" class="btn-sub" style="width: 100%; padding: 12px; border-radius: 6px; font-weight: bold; box-sizing: border-box;">회원가입</button>
         <p id="loginError" style="color:red; font-size:12px; margin-top:10px;"></p>
     </div>
 </div>
@@ -298,6 +299,36 @@
         auth.signInWithEmailAndPassword(email, pw).catch(e => {
             document.getElementById('loginError').innerText = "아이디/비밀번호 오류입니다.";
         });
+    }
+
+    function handleSignup() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pw = document.getElementById('loginPw').value.trim();
+        const errorMsg = document.getElementById('loginError');
+        
+        if(!email || !pw) return errorMsg.innerText = "이메일과 비밀번호를 모두 입력해주세요.";
+        if(pw.length < 6) return errorMsg.innerText = "비밀번호는 6자리 이상이어야 합니다.";
+
+        errorMsg.style.color = "blue";
+        errorMsg.innerText = "가입 처리 중...";
+
+        auth.createUserWithEmailAndPassword(email, pw)
+            .then(async (userCredential) => {
+                // 가입 성공 시 Firestore users 컬렉션에 기본 등급(Lv.0)으로 데이터 생성
+                await db.collection("users").doc(email).set({ level: 0 });
+                errorMsg.innerText = "가입 성공! 자동으로 로그인됩니다.";
+                // 성공하면 onAuthStateChanged가 반응하여 자동으로 로그인 처리 및 메인화면으로 넘어갑니다.
+            })
+            .catch(e => {
+                errorMsg.style.color = "red";
+                if(e.code === 'auth/email-already-in-use') {
+                    errorMsg.innerText = "이미 가입된 이메일입니다.";
+                } else if(e.code === 'auth/invalid-email') {
+                    errorMsg.innerText = "올바른 이메일 형식이 아닙니다.";
+                } else {
+                    errorMsg.innerText = "회원가입 오류가 발생했습니다.";
+                }
+            });
     }
 
     function handleLogout() { auth.signOut().then(() => location.reload()); }
@@ -584,6 +615,7 @@
     async function showHome() {
         hideAll();
         currentBoard = ""; // 특정 게시판 선택 해제
+        renderMenu(); 
         document.getElementById('homeView').classList.remove('hidden');
         const tbody = document.getElementById('homeTableBody');
         tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>소식을 불러오는 중...</td></tr>";
