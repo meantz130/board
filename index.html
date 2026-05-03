@@ -100,10 +100,24 @@
         .col-title { padding: 10px 12px !important; vertical-align: middle; }
 
         .board-tag { font-size: 10px; padding: 2px 5px; background: #eee; border-radius: 3px; margin-right: 5px; color: #666; }
+
+        /* 우클릭 컨텍스트 메뉴 */
+        #contextMenu { position: fixed; background: white; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); z-index: 5000; border-radius: 4px; overflow: hidden; font-size: 13px; }
+        .context-item { padding: 10px 15px; cursor: pointer; transition: background 0.2s; }
+        .context-item:hover { background: #f0f0f0; }
+        
+        /* 쪽지함 리스트 스타일 */
+        .msg-row { border-bottom: 1px solid #eee; padding: 10px 0; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; }
+        .msg-row:hover { background-color: #f9f9f9; }
+        .msg-unread { font-weight: bold; color: #1a1a1a; }
+        .msg-read { color: #888; }       
     </style>
 </head>
 <body>
-
+    <div id="contextMenu" class="hidden">
+        <div class="context-item" onclick="clickSendMsgFromMenu()">✉️ 쪽지 보내기</div>
+    </div>
+   
     <div id="loadingLayer">잠시만 기다려 주세요...</div>
 
     <div id="loginOverlay">
@@ -122,17 +136,22 @@
         <span style="font-weight: bold; margin-left: 10px;">Meantz 놀이터</span>
     </div>
 
-    <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+        <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
-    <div id="mainApp">
-        <nav id="sidebar">
-            <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
-
-            <div style="padding: 15px 20px; border-bottom: 1px solid #333; background: #222;">
-                <div style="font-size: 13px; color: #fff; margin-bottom: 5px;"><b id="sideUserName" style="color: var(--accent-color);"></b>님, 환영합니다!</div>
+        <div id="mainApp">
+            <nav id="sidebar">
+                <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
+                <div style="padding: 15px 20px; border-bottom: 1px solid #333; background: #222;">
+                    <div style="font-size: 13px; color: #fff; margin-bottom: 5px;"><b id="sideUserName" style="color: var(--accent-color);"></b>님, 환영합니다!</div>
+                    <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
+                        <span style="font-size: 18px;">✉️</span>
+                        <span id="msgUnreadBadge" class="hidden" style="position:absolute; top:-2px; right:-5px; background:#ff4d4d; color:white; border-radius:50%; width:15px; height:15px; font-size:10px; text-align:center; line-height:15px; font-weight:bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                    </div>
+                </div>                    
                 <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">등급: <b>Lv.<span id="sideUserLevel">0</span></b></div>
                 <button class="btn-sub" style="width: 100%; padding: 6px; font-size: 12px; background: #333; color: white; border: 1px solid #555;" onclick="openProfileModal()">내 정보 수정</button>
-            </div>
+            </nav>
+        </div>
         
             <ul id="menuList"></ul>
             <div class="nav-footer">
@@ -148,8 +167,9 @@
                 <button class="btn-chat" onclick="openChatPopup()">💬 실시간 채팅</button>
                 <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="showAdminView()">⚙️ 사이트 관리</button>
                 <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
-            </div>
-        </nav>
+            </nav>
+        </div>
+        
 
         <main>
             <div class="content-wrapper">
@@ -301,7 +321,40 @@
                 <button onclick="deleteUserAccount()" style="background:none; border:none; color:#aaa; text-decoration:underline; font-size:12px; cursor:pointer;">회원 탈퇴하기</button>
             </div>
         </div>
-    </div>  
+    </div>
+
+    <!-- [추가된 쪽지함 모달] -->
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content" style="width: 450px; min-height: 400px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">✉️ 내 쪽지함</h3>
+                <button onclick="closeMessageModal()" style="background:none; border:none; font-size:16px; cursor:pointer;">✖</button>
+            </div>
+        
+            <div style="margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <button class="tab-btn active" id="msgTab1" onclick="switchMsgTab(1)">받은 쪽지함</button>
+                <button class="tab-btn" id="msgTab2" onclick="switchMsgTab(2)">보낸 쪽지함</button>
+                <button class="tab-btn" id="msgTab3" onclick="switchMsgTab(3)">쪽지 쓰기</button>
+            </div>
+        
+            <!-- 받은 쪽지함 / 보낸 쪽지함 리스트 영역 -->
+            <div id="msgListArea" style="flex: 1; overflow-y: auto; max-height: 300px;"></div>
+        
+            <!-- 쪽지 쓰기 폼 영역 -->
+            <div id="msgWriteArea" class="hidden" style="flex: 1;">
+                <input type="text" id="msgReceiverInput" placeholder="받는 사람의 이메일(ID) 입력" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; box-sizing:border-box; border-radius:4px;">
+                <textarea id="msgContentInput" placeholder="내용을 입력하세요." style="width:100%; height:150px; padding:10px; border:1px solid #ddd; box-sizing:border-box; border-radius:4px; resize: none; margin-bottom: 10px;"></textarea>
+                <button class="btn-main" style="width:100%;" onclick="sendDirectMessage()">쪽지 보내기</button>
+            </div>
+
+            <!-- 개별 쪽지 읽기 영역 -->
+            <div id="msgReadArea" class="hidden" style="flex: 1;">
+                <div id="msgReadHeader" style="font-size:12px; color:#666; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #ddd;"></div>
+                <div id="msgReadContent" style="font-size:14px; white-space:pre-wrap; margin-bottom: 20px; line-height: 1.5;"></div>
+                <button class="btn-sub" style="width:100%;" onclick="switchMsgTab(currentMsgTab)">목록으로 돌아가기</button>
+            </div>
+        </div>
+    </div>
 
 <script>
     const ADMIN_EMAILS = ["오민택@aa.bb"]; 
@@ -350,6 +403,7 @@
             }, { merge: true });
             
             listenToOnlineUsers(); // 접속자 목록 수신 시작
+            listenToMessages(); // [추가] 새 쪽지 알림 수신 시작            
 
             loginOverlay.style.display = 'none';
 
@@ -538,7 +592,7 @@
                     </div>
                     <div class="post-preview">${previewText}</div>
                 </td>
-                <td class="col-author">${displayAuthor}</td>
+                <td class="col-author" oncontextmenu="openUserMenu(event, '${data.author}')" style="cursor:context-menu;">${displayAuthor}</td>
                 <td class="col-date">${data.dateShort}</td>
             `;
             tbody.appendChild(tr);
@@ -1021,6 +1075,185 @@
                 if (count === 0) list.innerHTML = "<li>접속자가 없습니다.</li>";
                 countSpan.innerText = count;
             });
+    }
+
+    // ==========================================
+    // [추가된 로직] 우클릭 컨텍스트 메뉴 및 쪽지 시스템
+    // ==========================================
+    
+    let selectedTargetUser = "";
+    let currentMsgTab = 1;
+    let msgUnsubscribe = null;
+
+    // 1. 실시간 안 읽은 쪽지 뱃지 업데이트
+    function listenToMessages() {
+        if (msgUnsubscribe) msgUnsubscribe();
+        msgUnsubscribe = db.collection("messages")
+            .where("receiver", "==", currentUserEmail)
+            .where("isRead", "==", false)
+            .onSnapshot(snap => {
+                const badge = document.getElementById('msgUnreadBadge');
+                if (snap.empty) {
+                    badge.classList.add('hidden');
+                } else {
+                    badge.classList.remove('hidden');
+                    badge.innerText = snap.size > 99 ? "99+" : snap.size; // 99개 초과 시 99+
+                }
+            });
+    }
+
+    // 2. 우클릭 시 팝업 메뉴 띄우기
+    function openUserMenu(e, userEmail) {
+        e.preventDefault(); 
+        if (userEmail === currentUserEmail) return; // 본인에게는 쪽지 보내기 숨김
+        
+        selectedTargetUser = userEmail;
+        const menu = document.getElementById('contextMenu');
+        menu.style.left = e.clientX + "px";
+        menu.style.top = e.clientY + "px";
+        menu.classList.remove('hidden');
+    }
+
+    // 바탕화면 클릭 시 우클릭 메뉴 숨기기
+    document.addEventListener('click', () => {
+        const menu = document.getElementById('contextMenu');
+        if (menu) menu.classList.add('hidden');
+    });
+
+    // 3. 우클릭 메뉴에서 '쪽지 보내기' 클릭
+    function clickSendMsgFromMenu() {
+        document.getElementById('contextMenu').classList.add('hidden');
+        openMessageModal();
+        switchMsgTab(3); // 쪽지 쓰기 탭으로 이동
+        document.getElementById('msgReceiverInput').value = selectedTargetUser; // 받을 사람 자동입력
+    }
+
+    // 4. 쪽지함 모달 열기/닫기/탭 전환
+    function openMessageModal() {
+        document.getElementById('messageModal').classList.remove('hidden');
+        switchMsgTab(1); // 기본으로 받은 쪽지함 열기
+    }
+    function closeMessageModal() {
+        document.getElementById('messageModal').classList.add('hidden');
+    }
+
+    function switchMsgTab(n) {
+        currentMsgTab = n;
+        document.getElementById('msgTab1').classList.toggle('active', n === 1);
+        document.getElementById('msgTab2').classList.toggle('active', n === 2);
+        document.getElementById('msgTab3').classList.toggle('active', n === 3);
+
+        document.getElementById('msgListArea').classList.toggle('hidden', n === 3);
+        document.getElementById('msgWriteArea').classList.toggle('hidden', n !== 3);
+        document.getElementById('msgReadArea').classList.add('hidden'); // 읽기 창은 일단 숨김
+
+        if (n === 1) loadMessages("receiver"); // 받은 쪽지
+        if (n === 2) loadMessages("sender");   // 보낸 쪽지
+        if (n === 3) {
+            // 쪽지 쓰기 탭 열릴 때 초기화 (우클릭으로 연 게 아니라면)
+            if(!selectedTargetUser) document.getElementById('msgReceiverInput').value = "";
+            document.getElementById('msgContentInput').value = "";
+            selectedTargetUser = ""; 
+        }
+    }
+
+    // 5. 쪽지 리스트 불러오기 (받은/보낸)
+    async function loadMessages(type) {
+        const listArea = document.getElementById('msgListArea');
+        listArea.innerHTML = "<div style='text-align:center; padding: 20px;'>불러오는 중...</div>";
+        
+        try {
+            const snap = await db.collection("messages")
+                .where(type, "==", currentUserEmail)
+                .orderBy("timestamp", "desc")
+                .get();
+                
+            listArea.innerHTML = "";
+            if (snap.empty) {
+                listArea.innerHTML = "<div style='text-align:center; padding: 20px; color:#888;'>쪽지가 없습니다.</div>";
+                return;
+            }
+
+            snap.forEach(doc => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = `msg-row ${data.isRead ? 'msg-read' : 'msg-unread'}`;
+                
+                // 날짜 포맷
+                const date = data.timestamp ? data.timestamp.toDate() : new Date();
+                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                
+                // 보낸 사람 or 받는 사람 표시
+                const targetName = type === "receiver" ? `보낸이: ${data.senderNickname || data.sender}` : `받는이: ${data.receiver}`;
+                const preview = data.content.length > 15 ? data.content.substring(0, 15) + "..." : data.content;
+
+                div.innerHTML = `
+                    <div style="flex:1;">
+                        <span style="font-size:11px; color:#aaa; margin-right:5px;">${type==="receiver" && !data.isRead ? '🔴' : ''}</span>
+                        ${preview}
+                    </div>
+                    <div style="font-size:11px; text-align:right;">
+                        <div>${targetName}</div>
+                        <div>${dateStr}</div>
+                    </div>
+                `;
+                div.onclick = () => viewMessage(doc.id, data, type);
+                listArea.appendChild(div);
+            });
+        } catch(e) {
+            listArea.innerHTML = "<div style='text-align:center; padding: 20px; color:red;'>목록을 불러올 수 없습니다.</div>";
+        }
+    }
+
+    // 6. 개별 쪽지 읽기
+    async function viewMessage(docId, data, type) {
+        document.getElementById('msgListArea').classList.add('hidden');
+        document.getElementById('msgReadArea').classList.remove('hidden');
+        
+        const date = data.timestamp ? data.timestamp.toDate() : new Date();
+        const dateStr = `${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+        
+        const header = type === "receiver" ? `보낸 사람: <b>${data.senderNickname}</b> (${data.sender})<br>받은 시간: ${dateStr}` 
+                                           : `받는 사람: <b>${data.receiver}</b><br>보낸 시간: ${dateStr}`;
+        
+        document.getElementById('msgReadHeader').innerHTML = header;
+        document.getElementById('msgReadContent').innerText = data.content;
+
+        // 받은 쪽지인데 안 읽은 상태라면 '읽음' 처리
+        if (type === "receiver" && !data.isRead) {
+            await db.collection("messages").doc(docId).update({ isRead: true });
+        }
+    }
+
+    // 7. 쪽지 보내기
+    async function sendDirectMessage() {
+        const receiverEmail = document.getElementById('msgReceiverInput').value.trim();
+        const content = document.getElementById('msgContentInput').value.trim();
+
+        if (!receiverEmail) return alert("받는 사람의 이메일(ID)을 입력해 주세요.");
+        if (!content) return alert("내용을 입력해 주세요.");
+        if (receiverEmail === currentUserEmail) return alert("자신에게는 쪽지를 보낼 수 없습니다.");
+
+        try {
+            // 유저가 존재하는지 확인 (users 컬렉션 조회)
+            const userDoc = await db.collection("users").doc(receiverEmail).get();
+            if (!userDoc.exists) return alert("존재하지 않는 사용자입니다. 이메일(ID)을 정확히 확인해 주세요.");
+
+            await db.collection("messages").add({
+                sender: currentUserEmail,
+                senderNickname: currentUserNickname,
+                receiver: receiverEmail,
+                content: content,
+                isRead: false,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert("쪽지를 성공적으로 보냈습니다!");
+            switchMsgTab(2); // 보낸 쪽지함으로 이동
+        } catch (e) {
+            alert("쪽지 발송 중 오류가 발생했습니다.");
+            console.error(e);
+        }
     }
 </script>
 </body>
