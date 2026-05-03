@@ -392,9 +392,20 @@
 
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
-        boards = doc.exists ? doc.data().list : [{name: "자유게시판", level: 0}];
+        if (doc.exists) {
+            // 기존 단일 level 값을 readLevel과 writeLevel로 마이그레이션(변환) 처리
+            boards = doc.data().list.map(b => ({
+                name: b.name,
+                readLevel: b.readLevel !== undefined ? b.readLevel : (b.level || 0),
+                writeLevel: b.writeLevel !== undefined ? b.writeLevel : (b.level || 0)
+            }));
+        } else {
+            boards = [{name: "자유게시판", readLevel: 0, writeLevel: 0}];
+        }
         renderMenu();
-        if(!currentBoard) switchBoard(boards[0].name);
+        // 읽기 권한이 있는 첫 번째 게시판을 찾아 띄워줍니다.
+        const firstReadableBoard = boards.find(b => currentUserLevel >= b.readLevel);
+        if(!currentBoard && firstReadableBoard) switchBoard(firstReadableBoard.name);
     }
 
     function renderMenu() {
@@ -402,7 +413,8 @@
         list.innerHTML = "";
         boards.forEach(b => {
             const li = document.createElement('li');
-            li.innerHTML = `${b.name} <span style="font-size:10px; opacity:0.5;">Lv.${b.level}</span>`;
+            // [수정] 메뉴에 읽기(R), 쓰기(W) 등급을 분리해서 표시합니다.
+            li.innerHTML = `${b.name} <span style="font-size:10px; opacity:0.5;">[읽기 Lv.${b.readLevel} / 쓰기 Lv.${b.writeLevel}]</span>`;
             if(b.name === currentBoard) li.className = "active";
             li.onclick = () => {
                 switchBoard(b.name);
@@ -419,13 +431,19 @@
         showList();
     }
 
-    async function showList(search = "") {
-        hideAll();
-        document.getElementById('listView').classList.remove('hidden');
-        
+    async function showList(search = "") {        
         const boardCfg = boards.find(b => b.name === currentBoard);
+
+        if(boardCfg && currentUserLevel < boardCfg.readLevel) {
+            alert(`[${currentBoard}] 읽기 권한이 없습니다. (필요 등급: Lv.${boardCfg.readLevel})`);
+            return showHome(); // 권한이 없으면 홈 화면으로 돌려보냅니다.
+        }
+
+        hideAll();
+        document.getElementById('listView').classList.remove('hidden');      
         const writeBtn = document.getElementById('writeBtn');
-        if(boardCfg && currentUserLevel < boardCfg.level) writeBtn.classList.add('hidden');
+        
+        if(boardCfg && currentUserLevel < boardCfg.writeLevel) writeBtn.classList.add('hidden');
         else writeBtn.classList.remove('hidden');
 
         const tbody = document.getElementById('postTableBody');
@@ -502,7 +520,7 @@
 
     async function savePost() {
         const boardCfg = boards.find(b => b.name === currentBoard);
-        if(boardCfg && currentUserLevel < boardCfg.level) return alert("권한이 없습니다.");
+        if(boardCfg && currentUserLevel < boardCfg.writeLevel) return alert("쓰기 권한이 없습니다.");
 
         const title = document.getElementById('postTitleInput').value.trim();
         const content = document.getElementById('postContentInput').value.trim();
@@ -713,9 +731,9 @@
             
             div.innerHTML = `
                 <div style="flex:1; font-weight:bold; color:#333;">📋 ${b.name}</div>
-                <div style="margin-right:15px; font-size:13px; color:#666;">
-                    읽기/쓰기 등급(Lv): 
-                    <input type="number" value="${b.level}" onchange="updateBoardLevel(${i}, this.value)" style="width:50px; padding:5px; text-align:center; border:1px solid #ccc; border-radius:3px;">
+                <div style="margin-right:15px; font-size:12px; color:#666; display:flex; gap:10px; align-items:center;">
+                    <label>읽기Lv: <input type="number" value="${b.readLevel}" onchange="boards[${i}].readLevel=parseInt(this.value)||0" style="width:40px; padding:3px; text-align:center; border:1px solid #ccc; border-radius:3px;"></label>
+                    <label>쓰기Lv: <input type="number" value="${b.writeLevel}" onchange="boards[${i}].writeLevel=parseInt(this.value)||0" style="width:40px; padding:3px; text-align:center; border:1px solid #ccc; border-radius:3px;"></label>
                 </div>
                 <div style="display:flex; gap:3px;">
                     <button class="btn-sub" style="padding:4px 8px; font-size:12px;" onclick="moveMenu(${i},-1)">▲</button>
@@ -736,13 +754,12 @@
     function addMenu() {
         const name = document.getElementById('newMenuInput').value.trim();
         if(!name) return alert("추가할 게시판 이름을 입력하세요.");
-        
-        // 중복 게시판 이름 방지
         if(boards.some(b => b.name === name)) return alert("이미 존재하는 게시판 이름입니다.");
         
-        boards.push({ name, level: 0 }); // 기본 레벨 0으로 추가
-        document.getElementById('newMenuInput').value = ""; // 입력창 비우기
-        renderMenuEditArea(); // 화면 다시 그리기
+        // [수정] 생성 시 읽기와 쓰기 등급을 각각 0으로 분리 세팅
+        boards.push({ name, readLevel: 0, writeLevel: 0 }); 
+        document.getElementById('newMenuInput').value = ""; 
+        renderMenuEditArea(); 
     }
 
     // 4. 게시판 순서 위/아래 이동 기능
@@ -779,8 +796,10 @@
 
         let allIntegratedPosts = [];
 
+        const readableBoards = boards.filter(b => currentUserLevel >= b.readLevel);
+
         // 모든 게시판(boards)에서 글을 가져옵니다.
-        for (const b of boards) {
+        for (const b of readableBoards) {
             const snap = await db.collection("boards").doc(b.name).collection("posts")
                           .orderBy("timestamp", "desc").limit(10).get();
             snap.forEach(doc => {
