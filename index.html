@@ -136,39 +136,40 @@
         <span style="font-weight: bold; margin-left: 10px;">Meantz 놀이터</span>
     </div>
 
-        <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
-        <div id="mainApp">
-            <nav id="sidebar">
-                <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
-                <div style="padding: 15px 20px; border-bottom: 1px solid #333; background: #222;">
-                    <div style="font-size: 13px; color: #fff; margin-bottom: 5px;"><b id="sideUserName" style="color: var(--accent-color);"></b>님, 환영합니다!</div>
-                    <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
-                        <span style="font-size: 18px;">✉️</span>
-                        <span id="msgUnreadBadge" class="hidden" style="position:absolute; top:-2px; right:-5px; background:#ff4d4d; color:white; border-radius:50%; width:15px; height:15px; font-size:10px; text-align:center; line-height:15px; font-weight:bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                    </div>
-                </div>                    
-                <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">등급: <b>Lv.<span id="sideUserLevel">0</span></b></div>
-                <button class="btn-sub" style="width: 100%; padding: 6px; font-size: 12px; background: #333; color: white; border: 1px solid #555;" onclick="openProfileModal()">내 정보 수정</button>
-            </nav>
-        </div>
-        
-            <ul id="menuList"></ul>
-            <div class="nav-footer">
-                <div id="onlineUsersBox" style="font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; max-height: 110px; overflow-y: auto;">
-                    <div style="color: #fff; margin-bottom: 5px; font-weight: bold; position: sticky; top: 0; background: #2a2a2a; padding-bottom: 3px;">
-                        🟢 접속자 (<span id="onlineCount">0</span>명)
-                    </div>
-                    <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px;">
-                        <li>로딩 중...</li>
-                    </ul>
+    <div id="mainApp">
+        <nav id="sidebar">
+            <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
+            <div style="padding: 15px 20px; border-bottom: 1px solid #333; background: #222;">
+                <div style="font-size: 13px; color: #fff; margin-bottom: 5px;"><b id="sideUserName" style="color: var(--accent-color);"></b>님, 환영합니다!</div>
+
+                <!-- 쪽지 아이콘 영역 -->
+                <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
+                    <span style="font-size: 18px;">✉️</span>
+                    <span id="msgUnreadBadge" class="hidden" style="position:absolute; top:-2px; right:-5px; background:#ff4d4d; color:white; border-radius:50%; width:15px; height:15px; font-size:10px; text-align:center; line-height:15px; font-weight:bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
                 </div>
+            </div>                    
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">등급: <b>Lv.<span id="sideUserLevel">0</span></b></div>
+            <button class="btn-sub" style="width: 100%; padding: 6px; font-size: 12px; background: #333; color: white; border: 1px solid #555;" onclick="openProfileModal()">내 정보 수정</button>
+        </nav>
+    </div>
+        
+        <ul id="menuList"></ul>
+        <div class="nav-footer">
+            <div id="onlineUsersBox" style="font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; max-height: 110px; overflow-y: auto;">
+                <div style="color: #fff; margin-bottom: 5px; font-weight: bold; position: sticky; top: 0; background: #2a2a2a; padding-bottom: 3px;">
+                    🟢 접속자 (<span id="onlineCount">0</span>명)
+                </div>
+                <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px;">
+                    <li>로딩 중...</li>
+                </ul>
+            </div>
             
-                <button class="btn-chat" onclick="openChatPopup()">💬 실시간 채팅</button>
-                <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="showAdminView()">⚙️ 사이트 관리</button>
-                <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
-            </nav>
-        </div>
+            <button class="btn-chat" onclick="openChatPopup()">💬 실시간 채팅</button>
+            <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="showAdminView()">⚙️ 사이트 관리</button>
+            <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
+     </div>
         
 
         <main>
