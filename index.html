@@ -136,7 +136,15 @@
         
             <ul id="menuList"></ul>
             <div class="nav-footer">
-                <!-- (기존 user-info-box 삭제됨) -->
+                <div id="onlineUsersBox" style="font-size: 12px; color: #aaa; margin-bottom: 10px; padding: 10px; background: #2a2a2a; border-radius: 4px; max-height: 110px; overflow-y: auto;">
+                    <div style="color: #fff; margin-bottom: 5px; font-weight: bold; position: sticky; top: 0; background: #2a2a2a; padding-bottom: 3px;">
+                        🟢 접속자 (<span id="onlineCount">0</span>명)
+                    </div>
+                    <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px;">
+                        <li>로딩 중...</li>
+                    </ul>
+                </div>
+            
                 <button class="btn-chat" onclick="openChatPopup()">💬 실시간 채팅</button>
                 <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="showAdminView()">⚙️ 사이트 관리</button>
                 <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
@@ -336,7 +344,15 @@
             document.getElementById('sideUserName').innerText = currentUserNickname;
             document.getElementById('sideUserLevel').innerText = currentUserLevel;
 
+            await db.collection("users").doc(currentUserEmail).set({ 
+                online: true, 
+                lastActive: firebase.firestore.FieldValue.serverTimestamp() 
+            }, { merge: true });
+            
+            listenToOnlineUsers(); // 접속자 목록 수신 시작
+
             loginOverlay.style.display = 'none';
+
             mainApp.style.display = 'flex'; 
             if(window.innerWidth <= 768) mobileHeader.style.display = 'flex';
             if (ADMIN_EMAILS.includes(user.email)) document.getElementById('adminMenuBtn').classList.remove('hidden');
@@ -388,7 +404,21 @@
             });
     }
 
-    function handleLogout() { auth.signOut().then(() => location.reload()); }
+    async function handleLogout() { 
+        if (currentUserEmail) {
+            // 로그아웃 버튼을 누르면 상태를 오프라인으로 변경
+            await db.collection("users").doc(currentUserEmail).set({ online: false }, { merge: true });
+        }
+        auth.signOut().then(() => location.reload()); 
+    }
+
+    // 창을 강제로 닫거나 새로고침할 때 상태를 오프라인으로 변경
+    window.addEventListener('beforeunload', () => {
+        if (currentUserEmail) {
+            // navigator.sendBeacon을 사용하면 브라우저가 닫히는 순간에도 안전하게 데이터를 보낼 수 있습니다 (순수 Firestore API 대용)
+            db.collection("users").doc(currentUserEmail).set({ online: false }, { merge: true });
+        }
+    });
 
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
@@ -952,6 +982,45 @@
         } catch (error) {
             alert("비밀번호가 일치하지 않거나 탈퇴 중 오류가 발생했습니다.");
         }
+    }
+    // ==========================================
+    // [추가된 로직] 실시간 접속자 목록 수신
+    // ==========================================
+    let onlineUsersUnsubscribe = null;
+
+    function listenToOnlineUsers() {
+        if (onlineUsersUnsubscribe) onlineUsersUnsubscribe(); // 중복 리스닝 방지
+        
+        // 데이터베이스(users 컬렉션)에서 online 상태가 true인 유저만 실시간으로 감시합니다.
+        onlineUsersUnsubscribe = db.collection("users").where("online", "==", true)
+            .onSnapshot(snapshot => {
+                const list = document.getElementById('onlineUsersList');
+                const countSpan = document.getElementById('onlineCount');
+                list.innerHTML = "";
+                
+                let count = 0;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const nickname = data.nickname || doc.id.split('@')[0];
+                    const isMe = doc.id === currentUserEmail;
+                    
+                    const li = document.createElement('li');
+                    li.style.marginBottom = "4px";
+                    
+                    if (isMe) {
+                        // 본인은 눈에 띄게 강조 표시
+                        li.innerHTML = `<span style="color: var(--accent-color); font-weight: bold;">${nickname}</span> (나)`;
+                    } else {
+                        li.innerText = nickname;
+                    }
+                    
+                    list.appendChild(li);
+                    count++;
+                });
+                
+                if (count === 0) list.innerHTML = "<li>접속자가 없습니다.</li>";
+                countSpan.innerText = count;
+            });
     }
 </script>
 </body>
