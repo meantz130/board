@@ -288,7 +288,7 @@
                                             <th>생년월일</th>
                                             <th>주소</th>
                                             <th style="width: 70px;">등급</th>
-                                            <th style="width: 60px;">관리</th>
+                                            <th style="width: 100px;">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="adminUserTableBody">
@@ -741,13 +741,12 @@
         }
     }
 
-    // [관리자 전용] 모든 사용자 정보 불러오기
+    // [관리자 전용] 모든 사용자 정보 불러오기 (수정됨)
     async function loadAllUsers() {
         const tbody = document.getElementById('adminUserTableBody');
         tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding: 20px;'>사용자 정보를 불러오는 중...</td></tr>";
         
         try {
-            // Firestore 'users' 컬렉션의 모든 문서를 가져옵니다.
             const snapshot = await db.collection("users").get();
             tbody.innerHTML = "";
             
@@ -756,9 +755,9 @@
                 const data = doc.data();
                 const tr = document.createElement('tr');
                 
-                // HTML id 속성에 @나 .이 들어가면 오류가 나므로 변환 처리
                 const safeId = email.replace(/[@.]/g, ''); 
                 
+                // [수정된 부분] 관리 탭에 '삭제' 버튼 추가
                 tr.innerHTML = `
                     <td style="color:#eb4d4b; font-weight:bold;">${email}</td>
                     <td>${data.nickname || '-'}</td>
@@ -766,16 +765,36 @@
                     <td>${data.birth || '-'}</td>
                     <td>${data.address || '-'}</td>
                     <td>
-                        <input type="number" id="levelInput_${safeId}" value="${data.level || 0}" style="width: 50px; padding: 5px; border:1px solid #ddd; text-align:center; border-radius:3px;">
+                        <input type="number" id="levelInput_${safeId}" value="${data.level || 0}" style="width: 40px; padding: 5px; border:1px solid #ddd; text-align:center; border-radius:3px;">
                     </td>
-                    <td>
-                        <button class="btn-sub" style="padding: 5px 10px; font-size: 12px; background:#333; color:white;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">적용</button>
+                    <td style="display: flex; gap: 5px;">
+                        <button class="btn-sub" style="padding: 5px 8px; font-size: 12px; background:#333; color:white;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">적용</button>
+                        <button class="btn-sub" style="padding: 5px 8px; font-size: 12px; background:white; color:#eb4d4b; border:1px solid #eb4d4b;" onclick="deleteUserFromDB('${email}')">삭제</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         } catch (error) {
             tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>정보를 불러오지 못했습니다.</td></tr>";
+            console.error(error);
+        }
+    }
+
+    // ==========================================
+    // [추가된 로직] 관리자 권한으로 DB에서 유저 정보 강제 삭제
+    // ==========================================
+    async function deleteUserFromDB(targetEmail) {
+        if (!confirm(`[${targetEmail}] 사용자의 데이터(DB 정보)를 완전히 삭제하시겠습니까?\n(Firebase Auth에서 이미 강제 탈퇴 처리된 유저의 남은 기록을 지울 때 유용합니다.)`)) return;
+
+        try {
+            // DB에서 해당 유저의 문서를 완벽하게 삭제합니다.
+            await db.collection("users").doc(targetEmail).delete();
+            alert(`${targetEmail} 님의 데이터가 사이트에서 완전히 정리되었습니다.`);
+            
+            // 삭제가 완료되면 화면의 리스트를 새로고침합니다.
+            loadAllUsers(); 
+        } catch (error) {
+            alert("유저 삭제 중 오류가 발생했습니다.");
             console.error(error);
         }
     }
