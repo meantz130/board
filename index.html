@@ -138,7 +138,7 @@
             <div class="nav-footer">
                 <!-- (기존 user-info-box 삭제됨) -->
                 <button class="btn-chat" onclick="openChatPopup()">💬 실시간 채팅</button>
-                <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="toggleMenuModal()">⚙️ 사이트 관리</button>
+                <button id="adminMenuBtn" class="btn-sub hidden" style="width:100%; font-size: 12px; margin-bottom:5px;" onclick="showAdminView()">⚙️ 사이트 관리</button>
                 <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
             </div>
         </nav>
@@ -219,33 +219,53 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ========================================== -->
+                <!-- [추가된 부분] 메인 화면용 사이트 관리 뷰 -->
+                <!-- ========================================== -->
+                <div id="adminView" class="hidden">
+                    <div class="board-header"><h2>⚙️ 사이트 관리</h2></div>
+                    <div class="card" style="padding: 20px;">
+                        <div style="margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                            <button class="tab-btn active" id="adminTab1" onclick="switchAdminTab(1)">메뉴/등급 설정</button>
+                            <button class="tab-btn" id="adminTab2" onclick="switchAdminTab(2)">사용자 관리 및 정보조회</button>
+                        </div>
+                    
+                        <!-- 탭 1: 메뉴/등급 설정 -->
+                        <div id="adminTabContent1">
+                            <div id="menuEditArea" style="margin-bottom: 15px;"></div>
+                            <div style="display:flex; gap:5px; margin-bottom: 20px;">
+                                <input type="text" id="newMenuInput" placeholder="새 게시판 이름" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                <button class="btn-sub" onclick="addMenu()">추가</button>
+                            </div>
+                            <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">설정 최종 저장</button>
+                        </div>
+
+                        <!-- 탭 2: 사용자 관리 및 정보조회 -->
+                        <div id="adminTabContent2" class="hidden">
+                            <div style="overflow-x: auto;">
+                                <table style="min-width: 700px; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>이메일(ID)</th>
+                                            <th>닉네임</th>
+                                            <th>연락처</th>
+                                            <th>생년월일</th>
+                                            <th>주소</th>
+                                            <th style="width: 70px;">등급</th>
+                                            <th style="width: 60px;">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUserTableBody">
+                                        <!-- 유저 목록이 여기에 렌더링됩니다 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
             </div>
         </main>
-    </div>
-
-    <div id="menuModal" class="modal hidden">
-        <div class="modal-content">
-            <div style="margin-bottom:15px;">
-                <button class="tab-btn active" id="tab1" onclick="switchTab(1)">메뉴/등급 설정</button>
-                <button class="tab-btn" id="tab2" onclick="switchTab(2)">사용자 관리</button>
-            </div>
-            <div id="tabContent1">
-                <div id="menuEditArea"></div>
-                <hr>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="newMenuInput" placeholder="새 게시판" style="flex:1; padding:5px;">
-                    <button onclick="addMenu()">추가</button>
-                </div>
-            </div>
-            <div id="tabContent2" class="hidden">
-                <input type="email" id="userEmailUpdate" placeholder="사용자 이메일" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
-                <input type="number" id="userLevelUpdate" placeholder="등급 (0~9)" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;">
-                <button class="btn-main" style="width:100%;" onclick="updateUserLevel()">등급 적용</button>
-            </div>
-            <hr style="margin-top:20px;">
-            <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">설정 최종 저장</button>
-            <button class="btn-sub" style="width:100%; margin-top:5px;" onclick="toggleMenuModal()">닫기</button>
-        </div>
     </div>
 
     <!-- [추가된 내 정보 수정 모달] -->
@@ -585,66 +605,95 @@
         };
     }
 
-    // 사이트 관리 모달 관련 함수들
-    function toggleMenuModal() {
-        const modal = document.getElementById('menuModal');
-        modal.classList.toggle('hidden');
-        if(!modal.classList.contains('hidden')) renderMenuEditArea();
+    // ==========================================
+    // [관리자 전용] 메인 화면 뷰 및 탭 전환
+    // ==========================================
+    function showAdminView() {
+        if (!ADMIN_EMAILS.includes(currentUserEmail)) return alert("관리자만 접근 가능합니다.");
+        
+        hideAll();
+        document.getElementById('adminView').classList.remove('hidden');
+        renderMenuEditArea(); // 게시판 메뉴 렌더링
+        switchAdminTab(1); // 기본으로 첫 번째 탭 열기
+        
+        // 모바일 환경이면 관리자 메뉴 누른 뒤 사이드바 닫기
+        if(window.innerWidth <= 768) toggleMobileMenu();
     }
 
-    function switchTab(n) {
-        document.getElementById('tabContent1').classList.toggle('hidden', n !== 1);
-        document.getElementById('tabContent2').classList.toggle('hidden', n !== 2);
-        document.getElementById('tab1').classList.toggle('active', n === 1);
-        document.getElementById('tab2').classList.toggle('active', n === 2);
+    function switchAdminTab(n) {
+        document.getElementById('adminTabContent1').classList.toggle('hidden', n !== 1);
+        document.getElementById('adminTabContent2').classList.toggle('hidden', n !== 2);
+        document.getElementById('adminTab1').classList.toggle('active', n === 1);
+        document.getElementById('adminTab2').classList.toggle('active', n === 2);
+
+        // 두 번째 사용자 관리 탭을 열 때만 유저 데이터를 불러옵니다.
+        if (n === 2) {
+            loadAllUsers();
+        }
     }
 
-    function renderMenuEditArea() {
-        const area = document.getElementById('menuEditArea');
-        area.innerHTML = "";
-        boards.forEach((b, i) => {
-            const div = document.createElement('div');
-            div.className = "item-row";
-            div.innerHTML = `
-                <div style="flex:1;"><b>${b.name}</b></div>
-                <div style="margin-right:10px;">Lv <input type="number" value="${b.level}" onchange="boards[${i}].level=parseInt(this.value)" style="width:40px;"></div>
-                <button onclick="moveMenu(${i},-1)">▲</button><button onclick="moveMenu(${i},1)">▼</button><button onclick="deleteMenu(${i})">X</button>
-            `;
-            area.appendChild(div);
-        });
+    // [관리자 전용] 모든 사용자 정보 불러오기
+    async function loadAllUsers() {
+        const tbody = document.getElementById('adminUserTableBody');
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding: 20px;'>사용자 정보를 불러오는 중...</td></tr>";
+        
+        try {
+            // Firestore 'users' 컬렉션의 모든 문서를 가져옵니다.
+            const snapshot = await db.collection("users").get();
+            tbody.innerHTML = "";
+            
+            snapshot.forEach(doc => {
+                const email = doc.id;
+                const data = doc.data();
+                const tr = document.createElement('tr');
+                
+                // HTML id 속성에 @나 .이 들어가면 오류가 나므로 변환 처리
+                const safeId = email.replace(/[@.]/g, ''); 
+                
+                tr.innerHTML = `
+                    <td style="color:#eb4d4b; font-weight:bold;">${email}</td>
+                    <td>${data.nickname || '-'}</td>
+                    <td>${data.phone || '-'}</td>
+                    <td>${data.birth || '-'}</td>
+                    <td>${data.address || '-'}</td>
+                    <td>
+                        <input type="number" id="levelInput_${safeId}" value="${data.level || 0}" style="width: 50px; padding: 5px; border:1px solid #ddd; text-align:center; border-radius:3px;">
+                    </td>
+                    <td>
+                        <button class="btn-sub" style="padding: 5px 10px; font-size: 12px; background:#333; color:white;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">적용</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>정보를 불러오지 못했습니다.</td></tr>";
+            console.error(error);
+        }
     }
 
-    function addMenu() {
-        const name = document.getElementById('newMenuInput').value.trim();
-        if(!name) return;
-        boards.push({ name, level: 0 });
-        document.getElementById('newMenuInput').value = "";
-        renderMenuEditArea();
+    // [관리자 전용] 특정 유저 등급 즉시 수정
+    async function updateSpecificUserLevel(email, safeId) {
+        if (!confirm(`[${email}] 사용자의 등급을 변경하시겠습니까?`)) return;
+        
+        const levelInput = document.getElementById(`levelInput_${safeId}`).value;
+        const newLevel = parseInt(levelInput);
+        
+        if (isNaN(newLevel)) return alert("올바른 등급(숫자)을 입력하세요.");
+        
+        try {
+            await db.collection("users").doc(email).set({ level: newLevel }, { merge: true });
+            alert(`${email} 님의 등급이 Lv.${newLevel} (으)로 수정되었습니다.`);
+        } catch (error) {
+            alert("등급 수정 중 오류가 발생했습니다.");
+            console.error(error);
+        }
     }
 
-    function moveMenu(i, d) {
-        if(i+d < 0 || i+d >= boards.length) return;
-        const temp = boards[i];
-        boards[i] = boards[i+d];
-        boards[i+d] = temp;
-        renderMenuEditArea();
-    }
-
-    function deleteMenu(i) { if(confirm("삭제?")) { boards.splice(i, 1); renderMenuEditArea(); } }
-
-    async function updateUserLevel() {
-        const email = document.getElementById('userEmailUpdate').value.trim();
-        const level = parseInt(document.getElementById('userLevelUpdate').value);
-        if(!email || isNaN(level)) return alert("정보를 입력하세요.");
-        await db.collection("users").doc(email).set({ level });
-        alert("등급이 수정되었습니다.");
-    }
-
+    // [관리자 전용] 메뉴/게시판 설정 저장 (팝업 닫기 부분 삭제됨)
     async function saveAllSettings() {
         await db.collection("settings").doc("menu").set({ list: boards });
-        alert("설정이 저장되었습니다.");
+        alert("게시판 설정이 저장되었습니다.");
         loadMenu();
-        toggleMenuModal();
     }
 
     // 1. MY BOARD 클릭 시 홈으로 이동하도록 수정
@@ -727,17 +776,19 @@
     }
 
     function hideAll() { 
-        ['listView','editorView','detailView','homeView'].forEach(id => {
+        ['listView','editorView','detailView','homeView', 'adminView'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.add('hidden');
         }); 
     }
+    
     function toggleMobileMenu() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
         const isOpen = sidebar.classList.toggle('open');
         overlay.style.display = isOpen ? 'block' : 'none';
     }
+    
     function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
     function openChatPopup() { window.open('chat.html', 'MeantzChat', 'width=400,height=600'); }
 
