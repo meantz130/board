@@ -696,6 +696,72 @@
         loadMenu();
     }
 
+    // 1. 게시판 목록 및 등급 입력창 화면에 그리기
+    function renderMenuEditArea() {
+        const area = document.getElementById('menuEditArea');
+        if (!area) return; 
+        
+        area.innerHTML = "";
+        boards.forEach((b, i) => {
+            const div = document.createElement('div');
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+            div.style.justifyContent = "space-between";
+            div.style.padding = "10px";
+            div.style.borderBottom = "1px solid #eee";
+            div.style.marginBottom = "5px";
+            
+            div.innerHTML = `
+                <div style="flex:1; font-weight:bold; color:#333;">📋 ${b.name}</div>
+                <div style="margin-right:15px; font-size:13px; color:#666;">
+                    읽기/쓰기 등급(Lv): 
+                    <input type="number" value="${b.level}" onchange="updateBoardLevel(${i}, this.value)" style="width:50px; padding:5px; text-align:center; border:1px solid #ccc; border-radius:3px;">
+                </div>
+                <div style="display:flex; gap:3px;">
+                    <button class="btn-sub" style="padding:4px 8px; font-size:12px;" onclick="moveMenu(${i},-1)">▲</button>
+                    <button class="btn-sub" style="padding:4px 8px; font-size:12px;" onclick="moveMenu(${i},1)">▼</button>
+                    <button class="btn-sub" style="padding:4px 8px; font-size:12px; color:#eb4d4b; font-weight:bold;" onclick="deleteMenu(${i})">X</button>
+                </div>
+            `;
+            area.appendChild(div);
+        });
+    }
+
+    // 2. 게시판 등급 숫자 변경 시 변수에 즉시 반영
+    function updateBoardLevel(index, newLevel) {
+        boards[index].level = parseInt(newLevel) || 0;
+    }
+
+    // 3. 새 게시판 추가 기능
+    function addMenu() {
+        const name = document.getElementById('newMenuInput').value.trim();
+        if(!name) return alert("추가할 게시판 이름을 입력하세요.");
+        
+        // 중복 게시판 이름 방지
+        if(boards.some(b => b.name === name)) return alert("이미 존재하는 게시판 이름입니다.");
+        
+        boards.push({ name, level: 0 }); // 기본 레벨 0으로 추가
+        document.getElementById('newMenuInput').value = ""; // 입력창 비우기
+        renderMenuEditArea(); // 화면 다시 그리기
+    }
+
+    // 4. 게시판 순서 위/아래 이동 기능
+    function moveMenu(i, d) {
+        if(i+d < 0 || i+d >= boards.length) return;
+        const temp = boards[i];
+        boards[i] = boards[i+d];
+        boards[i+d] = temp;
+        renderMenuEditArea();
+    }
+
+    // 5. 게시판 삭제 기능
+    function deleteMenu(i) { 
+        if(confirm(`'${boards[i].name}' 게시판을 목록에서 삭제하시겠습니까?\n(주의: 메뉴에서만 사라지며, 기존에 작성된 글 데이터는 DB에 남아있습니다.)`)) { 
+            boards.splice(i, 1); 
+            renderMenuEditArea(); 
+        } 
+    }
+
     // 1. MY BOARD 클릭 시 홈으로 이동하도록 수정
     document.querySelector('nav h3').onclick = () => {
         showHome();
