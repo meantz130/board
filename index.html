@@ -36,8 +36,6 @@
         /* ========================================== */
         #loadingLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; color: white; z-index: 9999; font-size: 1.2rem; font-weight: bold; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        
-        /* [수정] 사이드바 확장을 위한 Flex 레이아웃 */
         #mainApp { display: none; min-height: 100vh; align-items: stretch; }
 
         .mobile-header { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: var(--dark-bg); color: white; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -54,19 +52,9 @@
         .login-card button:hover { background: #333; }
 
         /* ========================================== */
-        /* 4. 사이드바 (내비게이션) - 스크롤 제거 및 자동확장 */
+        /* 4. 사이드바 (내비게이션) */
         /* ========================================== */
-        nav { 
-            width: var(--sidebar-width); 
-            flex-shrink: 0; /* 폭 유지 */
-            background: var(--sidebar-bg); 
-            color: #ccc; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 1001; 
-            transition: transform 0.3s ease; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
-        }
+        nav { width: var(--sidebar-width); flex-shrink: 0; background: var(--sidebar-bg); color: #ccc; display: flex; flex-direction: column; z-index: 1001; transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 1px; }
         
         .profile-area { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
@@ -76,7 +64,6 @@
         
         .badge { position:absolute; top:-4px; right:-6px; background:var(--accent-color); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; line-height:16px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid var(--dark-bg); }
         
-        /* [수정] 내부 스크롤 제거, 콘텐츠 길이만큼 자연스럽게 늘어나게 변경 */
         nav ul { list-style: none; padding: 10px 0; flex-grow: 1; margin: 0; }
         nav ul li { padding: 14px 25px; transition: 0.2s; font-size: 14px; font-weight: 500; color: #ced6e0; border-left: 4px solid transparent; }
         nav ul li:hover { background: rgba(255,255,255,0.05); color: white; }
@@ -84,16 +71,12 @@
         
         .menu-category { padding: 12px 20px; font-size: 13px; color: #fff; font-weight: 800; background: rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
         .menu-category:hover { background: rgba(0,0,0,0.5); }
-        
-        /* [수정] 절취선 높이를 대폭 줄이고 진짜 절취선(점선)처럼 디자인 변경 */
         .menu-divider { border: none; border-top: 1px dashed rgba(255,255,255,0.25); margin: 6px 20px; height: 0; }
-        
         nav ul li.sub-board { padding-left: 35px; font-size: 13.5px; }
-
         .nav-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
 
         /* ========================================== */
-        /* 5. 메인 홈 화면 (3분할 레이아웃) */
+        /* 5. 메인 홈 화면 */
         /* ========================================== */
         .home-banner { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 35px 40px; margin-bottom: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(118, 75, 162, 0.2); display: flex; align-items: center; justify-content: space-between; }
         .home-banner h1 { margin: 0 0 10px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
@@ -147,6 +130,12 @@
         .btn-sub { background: white; color: var(--text-main); padding: 10px 18px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 500; transition: 0.2s; }
         .btn-sub:hover { background: #f8f9fa; border-color: #ccc; }
         
+        /* [추가] 모달 내 체크박스 라벨용 CSS */
+        .setting-label-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; }
+        .setting-label-row label.title { font-size: 12px; font-weight: bold; }
+        .setting-label-row label.toggle { font-size: 11px; color: var(--text-sub); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .setting-label-row input[type="checkbox"] { width: 14px; height: 14px; margin: 0; cursor: pointer; }
+
         /* ========================================== */
         /* 8. 모달창 및 쪽지 시스템 */
         /* ========================================== */
@@ -158,7 +147,7 @@
         .tab-btn.active { color: var(--dark-bg); border-bottom-color: var(--dark-bg); }
         .tab-btn:hover:not(.active) { color: var(--text-main); }
 
-        #contextMenu { position: fixed; background: white; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 5000; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 500; }
+        #contextMenu { position: fixed; background: white; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 5000; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 500; min-width: 140px; }
         .context-item { padding: 12px 18px; cursor: pointer; transition: background 0.1s; }
         .context-item:hover { background: #f1f2f6; color: var(--accent-color); }
         
@@ -171,7 +160,6 @@
         /* 9. 반응형 미디어 쿼리 (모바일) */
         /* ========================================== */
         @media screen and (max-width: 768px) {
-            /* 모바일에서는 사이드바가 고정(fixed)되어야 하므로 복원 */
             nav { position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; transform: translateX(-100%); }
             nav.open { transform: translateX(0); }
             main { padding: 80px 15px 20px 15px; }
@@ -185,9 +173,11 @@
 </head>
 <body>
 
-    <!-- 우클릭 팝업 메뉴 -->
+    <!-- [수정] 우클릭 팝업 메뉴 (기능 추가됨) -->
     <div id="contextMenu" class="hidden">
         <div class="context-item" onclick="clickSendMsgFromMenu()">✉️ 쪽지 보내기</div>
+        <div class="context-item" onclick="clickViewUserProfileFromMenu()">👤 프로필 보기</div>
+        <div class="context-item" onclick="clickSearchPostsFromMenu()">📝 작성글 검색</div>
     </div>
    
     <!-- 로딩 화면 -->
@@ -244,9 +234,10 @@
             <ul id="menuList"></ul>
             
             <div class="nav-footer">
-                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; max-height: 120px; overflow-y: auto;">
-                    <div style="color: #fff; margin-bottom: 8px; font-weight: bold; position: sticky; top: 0; background: #2f3640; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        🟢 현재 접속자 (<span id="onlineCount">0</span>명)
+                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; max-height: 150px; overflow-y: auto;">
+                    <div onclick="toggleOnlineUsers()" style="cursor: pointer; color: #fff; margin-bottom: 8px; font-weight: bold; position: sticky; top: 0; background: #2f3640; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                        <span>🟢 현재 접속자 (<span id="onlineCount">0</span>명)</span>
+                        <span id="onlineToggleIcon" style="font-size: 10px; color: #a4b0be;">▼</span>
                     </div>
                     <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.8;">
                         <li>로딩 중...</li>
@@ -276,24 +267,18 @@
                     </div>
                     
                     <div class="home-grid">
-                        <!-- 왼쪽: 공지사항 리스트 (공지사항 게시판 전용) -->
                         <div class="card" style="padding:0; overflow:hidden;">
                             <div style="background: #fff4f4; padding: 15px 20px; font-weight: 800; color: var(--accent-color); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
                                 <span style="font-size: 16px;">📌</span> 공지사항
                             </div>
-                            <table style="margin:0;">
-                                <tbody id="homeNoticeTableBody"></tbody>
-                            </table>
+                            <table style="margin:0;"><tbody id="homeNoticeTableBody"></tbody></table>
                         </div>
                         
-                        <!-- 오른쪽: 일반 최신글 (공지사항 제외) -->
                         <div class="card" style="padding:0; overflow:hidden;">
                             <div style="background: #f8f9fa; padding: 15px 20px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
                                 <span style="font-size: 16px;">📝</span> 통합 최신 게시글
                             </div>
-                            <table style="margin:0;">
-                                <tbody id="homeRecentTableBody"></tbody>
-                            </table>
+                            <table style="margin:0;"><tbody id="homeRecentTableBody"></tbody></table>
                         </div>
                     </div>
                 </div>
@@ -314,7 +299,8 @@
                             <tbody id="postTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="search-bar">
+                    <!-- [수정] 검색바 컨테이너에 ID 부여 (특정 뷰에서 숨기기 위함) -->
+                    <div class="search-bar" id="listViewSearchBar">
                         <input type="text" id="searchInput" placeholder="제목 또는 내용을 검색해 보세요...">
                         <button class="btn-sub" onclick="searchPosts()">검색</button>
                         <button id="writeBtn" class="btn-main" onclick="showEditor()">글쓰기</button>
@@ -373,7 +359,6 @@
                         <div id="adminTabContent1">
                             <div id="menuEditArea" style="margin-bottom: 20px;"></div>
                             
-                            <!-- 항목 추가 컨트롤 영역 -->
                             <div style="display:flex; gap:8px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-wrap: wrap; align-items: center;">
                                 <input type="text" id="newMenuInput" placeholder="추가할 이름 입력" style="flex:1; min-width: 150px; margin: 0;">
                                 <div style="display: flex; gap: 5px; flex-shrink: 0;">
@@ -415,23 +400,34 @@
     <!-- 모달창 (팝업) 모음 -->
     <!-- ========================================== -->
 
-    <!-- 내 정보 수정 모달 -->
-    <div id="profileModal" class="modal hidden">
+    <!-- 내 정보 수정 모달 (공개/비공개 설정 추가됨) -->
+    <div id="profileModal" class="modal hidden" style="z-index: 3100;">
         <div class="modal-content" style="width: 380px;">
             <h3 style="margin-top: 0; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px;">내 정보 수정</h3>
             <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">정보를 수정하거나 계정을 관리할 수 있습니다.</p>
 
-            <label style="font-size: 12px; font-weight: bold;">닉네임</label>
-            <input type="text" id="profNickname" placeholder="닉네임 입력">
+            <div class="setting-label-row">
+                <label class="title">닉네임</label>
+            </div>
+            <input type="text" id="profNickname" placeholder="닉네임 입력" style="margin-bottom: 15px;">
             
-            <label style="font-size: 12px; font-weight: bold;">핸드폰 번호</label>
-            <input type="text" id="profPhone" placeholder="예: 010-1234-5678">
+            <div class="setting-label-row">
+                <label class="title">핸드폰 번호</label>
+                <label class="toggle"><input type="checkbox" id="profPhonePublic"> 타인에게 공개</label>
+            </div>
+            <input type="text" id="profPhone" placeholder="예: 010-1234-5678" style="margin-bottom: 15px;">
             
-            <label style="font-size: 12px; font-weight: bold;">생년월일</label>
-            <input type="date" id="profBirth">
+            <div class="setting-label-row">
+                <label class="title">생년월일</label>
+                <label class="toggle"><input type="checkbox" id="profBirthPublic"> 타인에게 공개</label>
+            </div>
+            <input type="date" id="profBirth" style="margin-bottom: 15px;">
             
-            <label style="font-size: 12px; font-weight: bold;">집 주소</label>
-            <input type="text" id="profAddress" placeholder="상세 주소 입력" style="margin-bottom: 20px;">
+            <div class="setting-label-row">
+                <label class="title">집 주소</label>
+                <label class="toggle"><input type="checkbox" id="profAddressPublic"> 타인에게 공개</label>
+            </div>
+            <input type="text" id="profAddress" placeholder="상세 주소 입력" style="margin-bottom: 25px;">
         
             <div style="background: #fff4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <p style="font-size: 12px; color: var(--accent-color); font-weight: bold; margin: 0 0 8px 0;">보안을 위해 현재 비밀번호를 입력해 주세요.</p>
@@ -444,6 +440,30 @@
             </div>
             <div style="text-align: right;">
                 <button onclick="deleteUserAccount()" style="background:none; border:none; color:#ccc; text-decoration:underline; font-size:12px;">회원 탈퇴하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [추가] 타인 프로필 보기 모달 (읽기 전용) -->
+    <div id="viewUserProfileModal" class="modal hidden" style="z-index: 3200;">
+        <div class="modal-content" style="width: 320px;">
+            <h3 id="viewProfileNickname" style="margin-top: 0; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px;">프로필</h3>
+            <div style="font-size: 14px; line-height: 2.2; color: var(--text-main); margin-top: 15px;">
+                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                    <b style="color:var(--text-sub);">이메일</b> <span id="viewProfileEmail"></span>
+                </div>
+                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                    <b style="color:var(--text-sub);">연락처</b> <span id="viewProfilePhone"></span>
+                </div>
+                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                    <b style="color:var(--text-sub);">생년월일</b> <span id="viewProfileBirth"></span>
+                </div>
+                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                    <b style="color:var(--text-sub);">거주지</b> <span id="viewProfileAddress"></span>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 25px;">
+                <button class="btn-main" style="width: 100%;" onclick="document.getElementById('viewUserProfileModal').classList.add('hidden')">닫기</button>
             </div>
         </div>
     </div>
@@ -511,7 +531,7 @@
 
     let currentBoard = "";
     let boards = []; 
-    let collapsedCategories = {}; // 폴딩 상태 관리
+    let collapsedCategories = {}; 
     let currentUserEmail = "";
     let currentUserLevel = 0;
     let currentUserNickname = ""; 
@@ -604,12 +624,8 @@
         auth.signOut().then(() => location.reload()); 
     }
 
-    window.addEventListener('beforeunload', () => {
-        if (currentUserEmail) db.collection("users").doc(currentUserEmail).set({ online: false }, { merge: true });
-    });
-
     // ==========================================
-    // [3] 사이드바 메뉴 (폴딩 기능 추가)
+    // [3] 사이드바 메뉴 
     // ==========================================
     async function loadMenu() {
         const doc = await db.collection("settings").doc("menu").get();
@@ -631,7 +647,6 @@
     function renderMenu() {
         const list = document.getElementById('menuList');
         list.innerHTML = "";
-        
         let currentCatCollapsed = false;
         let hasCategory = false; 
 
@@ -644,10 +659,7 @@
                 const catEl = document.createElement('div');
                 catEl.className = 'menu-category';
                 catEl.innerHTML = `<span>📂 ${b.name}</span> <span>${currentCatCollapsed ? '▼' : '▲'}</span>`;
-                catEl.onclick = () => {
-                    collapsedCategories[b.name] = !currentCatCollapsed;
-                    renderMenu(); 
-                };
+                catEl.onclick = () => { collapsedCategories[b.name] = !currentCatCollapsed; renderMenu(); };
                 list.appendChild(catEl);
             } 
             else if (b.type === 'divider') {
@@ -661,11 +673,7 @@
                 if(b.name === currentBoard) li.className = "active";
                 if(hasCategory) li.classList.add('sub-board'); 
 
-                li.onclick = () => {
-                    switchBoard(b.name);
-                    if(window.innerWidth <= 768) toggleMobileMenu();
-                };
-                
+                li.onclick = () => { switchBoard(b.name); if(window.innerWidth <= 768) toggleMobileMenu(); };
                 if (!currentCatCollapsed) list.appendChild(li); 
             }
         });
@@ -695,7 +703,7 @@
     }
 
     // ==========================================
-    // [4] 메인 홈 화면 (공지사항 전용 / 통합 분할)
+    // [4] 메인 홈 화면 
     // ==========================================
     async function showHome() {
         hideAll();
@@ -721,7 +729,6 @@
             snap.forEach(doc => {
                 const data = doc.data();
                 const postData = { id: doc.id, boardName: b.name, ...data };
-                
                 if (b.name === '공지사항') noticePosts.push(postData);
                 else recentPosts.push(postData);
             });
@@ -730,17 +737,11 @@
         noticePosts.sort((a, b) => b.timestamp - a.timestamp);
         recentPosts.sort((a, b) => b.timestamp - a.timestamp);
 
-        const displayNotices = noticePosts.slice(0, 15);
-        const displayRecents = recentPosts.slice(0, 15);
-
         const renderRows = (targetBody, postsList, isNoticeList) => {
             targetBody.innerHTML = "";
-            if (postsList.length === 0) {
-                targetBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:40px; color:#999;'>등록된 글이 없습니다.</td></tr>";
-                return;
-            }
+            if (postsList.length === 0) { targetBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:40px; color:#999;'>등록된 글이 없습니다.</td></tr>"; return; }
             
-            postsList.forEach(data => {
+            postsList.slice(0, 15).forEach(data => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => { currentBoard = data.boardName; showDetail(data.id, data); };
                 if (isNoticeList) tr.className = "notice-row"; 
@@ -774,8 +775,8 @@
             });
         };
 
-        renderRows(noticeTbody, displayNotices, true); 
-        renderRows(recentTbody, displayRecents, false); 
+        renderRows(noticeTbody, noticePosts, true); 
+        renderRows(recentTbody, recentPosts, false); 
     }
 
     // ==========================================
@@ -784,16 +785,20 @@
     async function showList(search = "") {        
         const boardCfg = boards.find(b => b.name === currentBoard);
 
-        if(boardCfg && currentUserLevel < boardCfg.readLevel) {
-            alert(`[${currentBoard}] 읽기 권한이 없습니다. (필요 등급: Lv.${boardCfg.readLevel})`);
-            return showHome(); 
+        // 검색 모드가 아닐 때만 권한 체크 및 검색바 노출
+        if (currentBoard !== "") {
+            document.getElementById('listViewSearchBar').classList.remove('hidden');
+            if(boardCfg && currentUserLevel < boardCfg.readLevel) {
+                alert(`[${currentBoard}] 읽기 권한이 없습니다. (필요 등급: Lv.${boardCfg.readLevel})`);
+                return showHome(); 
+            }
         }
 
         hideAll();
         document.getElementById('listView').classList.remove('hidden');      
         
         const writeBtn = document.getElementById('writeBtn');
-        if(boardCfg && currentUserLevel < boardCfg.writeLevel) writeBtn.classList.add('hidden');
+        if(currentBoard === "" || (boardCfg && currentUserLevel < boardCfg.writeLevel)) writeBtn.classList.add('hidden');
         else writeBtn.classList.remove('hidden');
 
         const tbody = document.getElementById('postTableBody');
@@ -1031,7 +1036,7 @@
     function closeAttendanceModal() { document.getElementById('attendanceModal').classList.add('hidden'); }
 
     // ==========================================
-    // [7] 내 정보 관리 및 회원 탈퇴
+    // [7] 내 정보 관리(공개설정 추가) 및 회원 탈퇴
     // ==========================================
     async function openProfileModal() {
         const doc = await db.collection("users").doc(currentUserEmail).get();
@@ -1041,6 +1046,11 @@
             document.getElementById('profPhone').value = data.phone || "";
             document.getElementById('profBirth').value = data.birth || "";
             document.getElementById('profAddress').value = data.address || "";
+
+            // [추가] 공개 여부 체크박스 상태 로드 (기본값 false: 비공개)
+            document.getElementById('profPhonePublic').checked = data.isPhonePublic || false;
+            document.getElementById('profBirthPublic').checked = data.isBirthPublic || false;
+            document.getElementById('profAddressPublic').checked = data.isAddressPublic || false;
         } else {
             document.getElementById('profNickname').value = currentUserEmail.split('@')[0];
         }
@@ -1062,12 +1072,21 @@
         const address = document.getElementById('profAddress').value.trim();
         const password = document.getElementById('profPassword').value;
 
+        // [추가] 공개 여부 체크박스 상태 가져오기
+        const isPhonePublic = document.getElementById('profPhonePublic').checked;
+        const isBirthPublic = document.getElementById('profBirthPublic').checked;
+        const isAddressPublic = document.getElementById('profAddressPublic').checked;
+
         if (!password) return alert("정보를 저장하려면 현재 비밀번호를 입력해야 합니다.");
         if (!nickname) return alert("닉네임을 입력해 주세요.");
 
         try {
             await reauthenticateUser(password); 
-            await db.collection("users").doc(currentUserEmail).set({ nickname, phone, birth, address }, { merge: true }); 
+            await db.collection("users").doc(currentUserEmail).set({ 
+                nickname, phone, birth, address,
+                isPhonePublic, isBirthPublic, isAddressPublic // DB에 저장
+            }, { merge: true }); 
+            
             alert("내 정보가 성공적으로 수정되었습니다.");
             currentUserNickname = nickname;
             document.getElementById('sideUserName').innerText = currentUserNickname;
@@ -1095,7 +1114,7 @@
     }
 
     // ==========================================
-    // [8] 쪽지함 및 실시간 접속자 목록
+    // [8] 팝업 메뉴 및 신규 기능 (프로필 보기/글 검색)
     // ==========================================
     let onlineUsersUnsubscribe = null;
     function listenToOnlineUsers() {
@@ -1122,27 +1141,24 @@
                 countSpan.innerText = count;
             });
     }
+    
+    function toggleOnlineUsers() {
+        const list = document.getElementById('onlineUsersList');
+        const icon = document.getElementById('onlineToggleIcon');
+        if (list.classList.contains('hidden')) {
+            list.classList.remove('hidden');
+            icon.innerText = '▼';
+        } else {
+            list.classList.add('hidden');
+            icon.innerText = '▲';
+        }
+    }
 
     let selectedTargetUser = "";
-    let currentMsgTab = 1;
-    let msgUnsubscribe = null;
-
-    function listenToMessages() {
-        if (msgUnsubscribe) msgUnsubscribe();
-        msgUnsubscribe = db.collection("messages").where("receiver", "==", currentUserEmail).where("isRead", "==", false)
-            .onSnapshot(snap => {
-                const badge = document.getElementById('msgUnreadBadge');
-                if (snap.empty) badge.classList.add('hidden');
-                else {
-                    badge.classList.remove('hidden');
-                    badge.innerText = snap.size > 99 ? "99+" : snap.size; 
-                }
-            });
-    }
 
     function openUserMenu(e, userEmail) {
         e.preventDefault(); 
-        if (userEmail === currentUserEmail) return; 
+        if (userEmail === currentUserEmail) return; // 본인 클릭 시 무시
         selectedTargetUser = userEmail;
         const menu = document.getElementById('contextMenu');
         menu.style.left = e.clientX + "px";
@@ -1152,11 +1168,132 @@
 
     document.addEventListener('click', () => { const menu = document.getElementById('contextMenu'); if (menu) menu.classList.add('hidden'); });
 
+    // 우클릭 기능 1. 쪽지 보내기
     function clickSendMsgFromMenu() {
         document.getElementById('contextMenu').classList.add('hidden');
         openMessageModal();
         switchMsgTab(3); 
         document.getElementById('msgReceiverInput').value = selectedTargetUser; 
+    }
+
+    // 우클릭 기능 2. 프로필 보기 (공개 설정 반영)
+    async function clickViewUserProfileFromMenu() {
+        document.getElementById('contextMenu').classList.add('hidden');
+        if(!selectedTargetUser) return;
+
+        const doc = await db.collection("users").doc(selectedTargetUser).get();
+        if(!doc.exists) return alert("해당 사용자의 정보를 찾을 수 없습니다.");
+        
+        const data = doc.data();
+        const isAdmin = ADMIN_EMAILS.includes(currentUserEmail); // 관리자는 무조건 열람 가능
+        const displayNick = data.nickname || selectedTargetUser.split('@')[0];
+        
+        document.getElementById('viewProfileNickname').innerText = `${displayNick}님의 프로필`;
+        document.getElementById('viewProfileEmail').innerText = selectedTargetUser;
+
+        // 공개 여부에 따른 데이터 마스킹 함수
+        const formatField = (val, isPublic) => {
+            if (!val) return "<span style='color:#ccc;'>미입력</span>";
+            if (isPublic || isAdmin) return val;
+            return "<span style='color:#ff4757;'>🔒 비공개</span>";
+        };
+
+        document.getElementById('viewProfilePhone').innerHTML = formatField(data.phone, data.isPhonePublic);
+        document.getElementById('viewProfileBirth').innerHTML = formatField(data.birth, data.isBirthPublic);
+        document.getElementById('viewProfileAddress').innerHTML = formatField(data.address, data.isAddressPublic);
+
+        document.getElementById('viewUserProfileModal').classList.remove('hidden');
+    }
+
+    // 우클릭 기능 3. 해당 사용자가 쓴 모든 게시글 검색
+    async function clickSearchPostsFromMenu() {
+        document.getElementById('contextMenu').classList.add('hidden');
+        if(!selectedTargetUser) return;
+
+        hideAll();
+        currentBoard = ""; // 전체 검색 모드를 위해 빈 값 처리
+        document.getElementById('listView').classList.remove('hidden');
+        document.getElementById('listViewSearchBar').classList.add('hidden'); // 검색 상태일 땐 상단 검색바 숨김
+        
+        // 검색중인 유저 닉네임 가져오기 (비동기로 가볍게 처리)
+        let displayNick = selectedTargetUser.split('@')[0];
+        const userDoc = await db.collection("users").doc(selectedTargetUser).get();
+        if(userDoc.exists && userDoc.data().nickname) displayNick = userDoc.data().nickname;
+
+        document.getElementById('boardTitle').innerText = `🔍 '${displayNick}'님의 작성글`;
+
+        const tbody = document.getElementById('postTableBody');
+        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 40px;'>게시글을 모두 검색 중입니다...</td></tr>";
+
+        let allUserPosts = [];
+        // 읽기 권한이 있는 모든 게시판 목록 순회
+        const readableBoards = boards.filter(b => b.type === 'board' || !b.type).filter(b => currentUserLevel >= b.readLevel);
+
+        for(const b of readableBoards) {
+            const snap = await db.collection("boards").doc(b.name).collection("posts")
+                .where("author", "==", selectedTargetUser)
+                .get();
+                
+            snap.forEach(doc => {
+                allUserPosts.push({ id: doc.id, boardName: b.name, ...doc.data() });
+            });
+        }
+
+        // 최신 시간순 정렬
+        allUserPosts.sort((a,b) => b.timestamp - a.timestamp);
+
+        tbody.innerHTML = "";
+        if(allUserPosts.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:40px; color:#999;'>작성한 글이 없습니다.</td></tr>"; 
+            return;
+        }
+
+        // 테이블에 결과 뿌리기
+        allUserPosts.forEach((data, i) => {
+            const tr = document.createElement('tr');
+            // 검색된 글 클릭 시, 해당 게시판으로 currentBoard 세팅 후 글 열기
+            tr.onclick = () => { currentBoard = data.boardName; showDetail(data.id, data); };
+
+            const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
+            let displayTitle = data.title;
+            
+            // 본인 글 검색은 아니므로, 비밀글은 관리자만 제목 확인 가능
+            if (data.isSecret && !isAdmin) displayTitle = `<span style="color:#999;">🔒 비밀글입니다.</span>`;
+            else if (data.isSecret) displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:12px; font-weight:normal;">(비밀글)</span>`;
+
+            let pureText = data.content.replace(/<[^>]*>?/gm, ''); 
+            let previewText = pureText.substring(0, 70) + (pureText.length > 70 ? "..." : "");
+        
+            tr.innerHTML = `
+                <td class="col-num">${allUserPosts.length - i}</td>
+                <td class="col-title">
+                    <div style="margin-bottom: 2px;">
+                        <span class="board-tag" style="margin:0;">${data.boardName}</span>
+                        <span style="font-weight:600; font-size: 15px;">${displayTitle}</span>
+                    </div>
+                    <div class="post-preview">${previewText}</div>
+                </td>
+                <td class="col-author">${data.authorNickname || data.author.split('@')[0]}</td>
+                <td class="col-date">${data.dateShort}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ==========================================
+    // [9] 쪽지 시스템
+    // ==========================================
+    let currentMsgTab = 1;
+    let msgUnsubscribe = null;
+
+    function listenToMessages() {
+        if (msgUnsubscribe) msgUnsubscribe();
+        msgUnsubscribe = db.collection("messages").where("receiver", "==", currentUserEmail).where("isRead", "==", false)
+            .onSnapshot(snap => {
+                const badge = document.getElementById('msgUnreadBadge');
+                if (snap.empty) badge.classList.add('hidden');
+                else { badge.classList.remove('hidden'); badge.innerText = snap.size > 99 ? "99+" : snap.size; }
+            });
     }
 
     function openMessageModal() { document.getElementById('messageModal').classList.remove('hidden'); switchMsgTab(1); }
@@ -1248,7 +1385,7 @@
     }
 
     // ==========================================
-    // [9] 관리자 (메뉴 설정 및 회원관리)
+    // [10] 관리자 (메뉴 설정 및 회원관리)
     // ==========================================
     function showAdminView() {
         if (!ADMIN_EMAILS.includes(currentUserEmail)) return alert("관리자 권한이 필요합니다.");
@@ -1327,13 +1464,9 @@
         
         boards.forEach((b, i) => {
             const div = document.createElement('div');
-            div.style.display = "flex"; 
-            div.style.alignItems = "center"; 
-            div.style.justifyContent = "space-between";
-            div.style.padding = "15px"; 
-            div.style.borderBottom = "1px solid var(--border-color)"; 
-            div.style.borderRadius = "8px"; 
-            div.style.marginBottom = "8px";
+            div.style.display = "flex"; div.style.alignItems = "center"; div.style.justifyContent = "space-between";
+            div.style.padding = "15px"; div.style.borderBottom = "1px solid var(--border-color)"; 
+            div.style.borderRadius = "8px"; div.style.marginBottom = "8px";
 
             if (b.type === 'category') {
                 div.style.background = "#eef2f5";
@@ -1375,18 +1508,11 @@
     }
 
     function addMenuItem(type) {
-        let name = "";
-        
-        if (type === 'divider') {
-            name = "divider_" + Date.now(); 
-        } else {
-            name = document.getElementById('newMenuInput').value.trim();
-            if(!name) return alert("추가할 이름을 입력해 주세요.");
-            if(boards.some(b => b.type !== 'divider' && b.name === name)) return alert("이미 사용 중인 이름입니다.");
-        }
+        let name = type === 'divider' ? "divider_" + Date.now() : document.getElementById('newMenuInput').value.trim();
+        if(type !== 'divider' && !name) return alert("추가할 이름을 입력해 주세요.");
+        if(type !== 'divider' && boards.some(b => b.type !== 'divider' && b.name === name)) return alert("이미 사용 중인 이름입니다.");
         
         boards.push({ name, type, readLevel: 0, writeLevel: 0 }); 
-        
         if (type !== 'divider') document.getElementById('newMenuInput').value = ""; 
         renderMenuEditArea(); 
     }
@@ -1399,10 +1525,7 @@
 
     function deleteMenu(i) { 
         let confirmMsg = boards[i].type === 'board' ? `'${boards[i].name}' 게시판을 메뉴에서 삭제할까요? (작성된 데이터는 보존됩니다)` : `해당 항목을 삭제하시겠습니까?`;
-        if(confirm(confirmMsg)) { 
-            boards.splice(i, 1); 
-            renderMenuEditArea(); 
-        } 
+        if(confirm(confirmMsg)) { boards.splice(i, 1); renderMenuEditArea(); } 
     }
 </script>
 </body>
