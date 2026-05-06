@@ -143,21 +143,26 @@
             <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
             <!-- ▼ 여기서부터 ▼ -->
             <div style="padding: 15px 20px; border-bottom: 1px solid #333; background: #222;">
-                
-                <!-- 이름과 쪽지 아이콘을 가로로 묶어주는 영역 -->
+                <!-- 이름과 쪽지 아이콘 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                     <div style="font-size: 13px; color: #fff;"><b id="sideUserName" style="color: var(--accent-color);"></b>님, 환영합니다!</div>
-                    
-                    <!-- 쪽지 아이콘 영역 -->
                     <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
                         <span style="font-size: 18px;">✉️</span>
                         <span id="msgUnreadBadge" class="hidden" style="position:absolute; top:-2px; right:-5px; background:#ff4d4d; color:white; border-radius:50%; width:15px; height:15px; font-size:10px; text-align:center; line-height:15px; font-weight:bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
                     </div>
                 </div>
                 
-                <!-- 등급과 내 정보 수정 버튼이 박스 안으로 들어옵니다 -->
-                <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">등급: <b>Lv.<span id="sideUserLevel">0</span></b></div>
-                <button class="btn-sub" style="width: 100%; padding: 6px; font-size: 12px; background: #333; color: white; border: 1px solid #555;" onclick="openProfileModal()">내 정보 수정</button>
+                <!-- [수정된 부분] 등급 및 포인트 표시 -->
+                <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
+                    <div>등급: <b>Lv.<span id="sideUserLevel">0</span></b></div>
+                    <div style="margin-top: 3px;">포인트: <b style="color: #ffd700;"><span id="sideUserPoints">0</span> pt</b></div>
+                </div>
+
+                <!-- [수정된 부분] 출석체크 및 내 정보 버튼 -->
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-sub" style="flex: 1; padding: 6px; font-size: 12px; background: #eb4d4b; color: white; border: none; font-weight: bold;" onclick="checkAttendance()">✅ 출석체크</button>
+                    <button class="btn-sub" style="flex: 1; padding: 6px; font-size: 12px; background: #333; color: white; border: 1px solid #555;" onclick="openProfileModal()">내 정보 수정</button>
+                </div>
             </div>      
             
         <ul id="menuList"></ul>
@@ -176,6 +181,17 @@
             <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
         </div>
     </nav>
+
+    <div id="attendanceModal" class="modal hidden" style="z-index: 4000;">
+        <div class="modal-content" style="width: 300px; text-align: center;">
+            <h3 style="margin-top: 0; color: var(--accent-color);">🎉 출석 완료!</h3>
+            <p id="attDate" style="font-size: 12px; color: #888; margin-bottom: 5px;"></p>
+            <div style="font-size: 35px; margin: 15px 0;">🎁</div>
+            <p id="attMessage" style="font-size: 14px; font-weight: bold;"></p>
+            <p id="attPoints" style="font-size: 20px; color: #ff9800; font-weight: bold; margin-bottom: 20px;"></p>
+            <button class="btn-main" style="width:100%;" onclick="closeAttendanceModal()">확인</button>
+        </div>
+    </div>
         
 
         <main>
@@ -384,6 +400,9 @@
     let currentUserEmail = "";
     let currentUserLevel = 0;
     let currentUserNickname = ""; // [추가] 현재 접속자의 닉네임을 담을 변수
+    let currentUserPoints = 0;
+    let userAttendanceStreak = 0;
+    let userLastAttendance = "";
 
     auth.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
@@ -401,8 +420,16 @@
             // [추가/수정] DB에 닉네임이 있으면 쓰고, 없으면 이메일 앞자리를 씁니다.
             currentUserNickname = userData.nickname || user.email.split('@')[0]; 
 
+            // ==========================================
+            // [추가된 로직] DB에서 포인트와 출석 데이터 불러오기
+            // ==========================================
+            currentUserPoints = userData.points || 0;
+            userAttendanceStreak = userData.attendanceStreak || 0;
+            userLastAttendance = userData.lastAttendanceDate || "";
+
             document.getElementById('sideUserName').innerText = currentUserNickname;
             document.getElementById('sideUserLevel').innerText = currentUserLevel;
+            document.getElementById('sideUserPoints').innerText = currentUserPoints; // 포인트 화면에 반영
 
             await db.collection("users").doc(currentUserEmail).set({ 
                 online: true, 
@@ -1280,6 +1307,71 @@
             alert("쪽지 발송 중 오류가 발생했습니다.");
             console.error(e);
         }
+    }
+
+    // ==========================================
+    // [추가된 로직] 출석체크 시스템
+    // ==========================================
+    async function checkAttendance() {
+        // 1. 날짜 구하기 (오늘, 어제)
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+        // 2. 중복 출석 방지
+        if (userLastAttendance === todayStr) {
+            return alert("오늘은 이미 출석체크를 완료했습니다! 내일 다시 와주세요. 😊");
+        }
+
+        // 3. 연속 출석일(Streak) 계산
+        let newStreak = 1; // 기본은 1일차
+        if (userLastAttendance === yesterdayStr) {
+            newStreak = userAttendanceStreak + 1; // 어제도 출석했으면 +1
+        }
+
+        // 4. 포인트 계산 (50 ~ 200 랜덤)
+        let basePoints = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+        let finalPoints = basePoints;
+        let bonusMsg = "";
+
+        // 3일 연속 출석 시 기본 포인트의 1.5배 (3일, 6일, 9일... 매 3일마다 적용)
+        if (newStreak % 3 === 0) {
+            finalPoints = Math.floor(basePoints * 1.5);
+            bonusMsg = `<br><span style="color:#eb4d4b; font-size:12px;">(🔥 3일 연속 출석! 보너스 1.5배 적용)</span>`;
+        }
+
+        try {
+            // 5. DB 업데이트
+            const newTotalPoints = currentUserPoints + finalPoints;
+            await db.collection("users").doc(currentUserEmail).set({
+                points: newTotalPoints,
+                attendanceStreak: newStreak,
+                lastAttendanceDate: todayStr
+            }, { merge: true });
+
+            // 6. 변수 및 화면 즉시 갱신
+            currentUserPoints = newTotalPoints;
+            userAttendanceStreak = newStreak;
+            userLastAttendance = todayStr;
+            document.getElementById('sideUserPoints').innerText = currentUserPoints;
+
+            // 7. 팝업창 띄우기
+            document.getElementById('attDate').innerText = `📅 ${todayStr}`;
+            document.getElementById('attMessage').innerHTML = `<b>${newStreak}일째</b> 출석체크가 완료되었습니다!${bonusMsg}`;
+            document.getElementById('attPoints').innerText = `+${finalPoints} pt`;
+            document.getElementById('attendanceModal').classList.remove('hidden');
+
+        } catch (e) {
+            alert("출석체크 처리 중 오류가 발생했습니다.");
+            console.error(e);
+        }
+    }
+
+    function closeAttendanceModal() {
+        document.getElementById('attendanceModal').classList.add('hidden');
     }
 </script>
 </body>
