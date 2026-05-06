@@ -148,12 +148,21 @@
 </head>
 <body>
     <header>💬 실시간 소통방</header>
-    <div id="presenceBar">🟢 현재 접속 <span id="onlineCount" class="user-count">0</span>명 : <span id="userList" style="font-weight: normal;">불러오는 중...</span></div>
+    <!-- [수정된 HTML] 접기/펴기 기능이 추가된 접속자 영역 -->
+    <div style="font-size: 12px; color: #a4b0be; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; max-height: 150px; overflow-y: auto;">
+        <div onclick="toggleOnlineUsers()" style="cursor: pointer; color: #fff; margin-bottom: 8px; font-weight: bold; position: sticky; top: 0; background: #2f3640; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <span>🟢 현재 접속자 (<span id="onlineCount">0</span>명)</span>
+            <span id="onlineToggleIcon" style="font-size: 10px; color: #a4b0be;">▼</span>
+        </div>
+        <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.8;">
+            <li>로딩 중...</li>
+        </ul>
+    </div>
     
     <div id="chatBox"></div>
     
     <div class="input-area">
-        <input type="text" id="chatInput" placeholder="따뜻한 메시지를 입력해 주세요." onkeyup="if(window.event.keyCode==13) sendChat()" inputmode="text">
+        <input type="text" id="chatInput" placeholder="메시지를 입력해 주세요." onkeyup="if(window.event.keyCode==13) sendChat()" inputmode="text">
         <button onclick="sendChat()">전송</button>
     </div>
 
@@ -317,6 +326,23 @@
                         }
                     });
                 });
+        }
+
+        // ==========================================
+        // 접속자 목록 접기/펴기 토글 기능
+        // ==========================================
+        function toggleOnlineUsers() {
+            const list = document.getElementById('onlineUsersList');
+            const icon = document.getElementById('onlineToggleIcon');
+        
+            // CSS의 hidden 클래스를 이용해 숨김/표시 전환
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                icon.innerText = '▼'; // 열렸을 때 화살표
+            } else {
+                list.classList.add('hidden');
+                icon.innerText = '▲'; // 접혔을 때 화살표
+            }
         }
     </script>
 </body>
