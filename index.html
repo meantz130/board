@@ -36,7 +36,9 @@
         /* ========================================== */
         #loadingLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; color: white; z-index: 9999; font-size: 1.2rem; font-weight: bold; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        #mainApp { display: none; min-height: 100vh; }
+        
+        /* [수정] 사이드바 확장을 위한 Flex 레이아웃 */
+        #mainApp { display: none; min-height: 100vh; align-items: stretch; }
 
         .mobile-header { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: var(--dark-bg); color: white; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .menu-toggle-btn { background: none; border: none; color: white; font-size: 24px; padding: 0; }
@@ -52,9 +54,19 @@
         .login-card button:hover { background: #333; }
 
         /* ========================================== */
-        /* 4. 사이드바 (내비게이션) */
+        /* 4. 사이드바 (내비게이션) - 스크롤 제거 및 자동확장 */
         /* ========================================== */
-        nav { width: var(--sidebar-width); background: var(--sidebar-bg); color: #ccc; position: fixed; height: 100%; display: flex; flex-direction: column; z-index: 1001; transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        nav { 
+            width: var(--sidebar-width); 
+            flex-shrink: 0; /* 폭 유지 */
+            background: var(--sidebar-bg); 
+            color: #ccc; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1001; 
+            transition: transform 0.3s ease; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
+        }
         nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 1px; }
         
         .profile-area { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
@@ -64,16 +76,19 @@
         
         .badge { position:absolute; top:-4px; right:-6px; background:var(--accent-color); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; line-height:16px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid var(--dark-bg); }
         
-        nav ul { list-style: none; padding: 10px 0; flex-grow: 1; margin: 0; overflow-y: auto; }
+        /* [수정] 내부 스크롤 제거, 콘텐츠 길이만큼 자연스럽게 늘어나게 변경 */
+        nav ul { list-style: none; padding: 10px 0; flex-grow: 1; margin: 0; }
         nav ul li { padding: 14px 25px; transition: 0.2s; font-size: 14px; font-weight: 500; color: #ced6e0; border-left: 4px solid transparent; }
         nav ul li:hover { background: rgba(255,255,255,0.05); color: white; }
         nav ul li.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--accent-color); }
         
-        /* [추가] 메뉴 대항목 및 절취선 스타일 */
         .menu-category { padding: 12px 20px; font-size: 13px; color: #fff; font-weight: 800; background: rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
         .menu-category:hover { background: rgba(0,0,0,0.5); }
-        .menu-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 15px 20px; }
-        nav ul li.sub-board { padding-left: 35px; font-size: 13.5px; } /* 카테고리 하위 게시판 들여쓰기 */
+        
+        /* [수정] 절취선 높이를 대폭 줄이고 진짜 절취선(점선)처럼 디자인 변경 */
+        .menu-divider { border: none; border-top: 1px dashed rgba(255,255,255,0.25); margin: 6px 20px; height: 0; }
+        
+        nav ul li.sub-board { padding-left: 35px; font-size: 13.5px; }
 
         .nav-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
 
@@ -92,7 +107,7 @@
         /* ========================================== */
         /* 6. 메인 컨텐츠 및 게시판 테이블 */
         /* ========================================== */
-        main { flex: 1; margin-left: var(--sidebar-width); padding: 50px 30px; display: flex; justify-content: center; background: var(--bg-color); min-height: 100vh; }
+        main { flex: 1; padding: 50px 30px; display: flex; justify-content: center; background: var(--bg-color); }
         .content-wrapper { width: 100%; max-width: 950px; }
         .board-header { margin-bottom: 20px; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px; }
         .board-header h2 { margin: 0; color: var(--dark-bg); font-weight: 800; }
@@ -123,7 +138,6 @@
         input[type="text"], input[type="password"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; transition: 0.2s; }
         input:focus, textarea:focus { border-color: var(--dark-bg); outline: none; }
         
-        /* [수정] 버튼 줄바꿈 방지 및 검색바 레이아웃 최적화 */
         .search-bar { display: flex; gap: 8px; margin-top: 20px; align-items: center; flex-wrap: nowrap; }
         .search-bar input { flex: 1; min-width: 100px; margin: 0; }
         .search-bar button { white-space: nowrap; flex-shrink: 0; }
@@ -154,15 +168,15 @@
         .msg-read { color: var(--text-sub); }       
 
         /* ========================================== */
-        /* 9. 반응형 미디어 쿼리 */
+        /* 9. 반응형 미디어 쿼리 (모바일) */
         /* ========================================== */
         @media screen and (max-width: 768px) {
-            nav { transform: translateX(-100%); }
+            /* 모바일에서는 사이드바가 고정(fixed)되어야 하므로 복원 */
+            nav { position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; transform: translateX(-100%); }
             nav.open { transform: translateX(0); }
-            main { margin-left: 0; padding: 80px 15px 20px 15px; }
-            .mobile-header { display: flex; }
-            .col-author, .col-date { display: none; }
+            main { padding: 80px 15px 20px 15px; }
             .card { padding: 20px; }
+            .col-author, .col-date { display: none; }
             .home-grid { grid-template-columns: 1fr; } 
             .home-banner { padding: 30px 20px; flex-direction: column; text-align: center; }
             .banner-icon { display: none; }
@@ -359,7 +373,7 @@
                         <div id="adminTabContent1">
                             <div id="menuEditArea" style="margin-bottom: 20px;"></div>
                             
-                            <!-- [수정] 항목 추가 컨트롤 영역 (줄바꿈 방지 적용) -->
+                            <!-- 항목 추가 컨트롤 영역 -->
                             <div style="display:flex; gap:8px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-wrap: wrap; align-items: center;">
                                 <input type="text" id="newMenuInput" placeholder="추가할 이름 입력" style="flex:1; min-width: 150px; margin: 0;">
                                 <div style="display: flex; gap: 5px; flex-shrink: 0;">
@@ -497,7 +511,7 @@
 
     let currentBoard = "";
     let boards = []; 
-    let collapsedCategories = {}; // 폴딩(대항목 접기) 상태 저장용 변수
+    let collapsedCategories = {}; // 폴딩 상태 관리
     let currentUserEmail = "";
     let currentUserLevel = 0;
     let currentUserNickname = ""; 
@@ -602,7 +616,7 @@
         if (doc.exists) {
             boards = doc.data().list.map(b => ({
                 name: b.name,
-                type: b.type || 'board', // [추가] type 속성 호환성 보장
+                type: b.type || 'board',
                 readLevel: b.readLevel !== undefined ? b.readLevel : (b.level || 0),
                 writeLevel: b.writeLevel !== undefined ? b.writeLevel : (b.level || 0)
             }));
@@ -619,12 +633,12 @@
         list.innerHTML = "";
         
         let currentCatCollapsed = false;
-        let hasCategory = false; // 카테고리 내부인지 판별하여 들여쓰기 적용
+        let hasCategory = false; 
 
         boards.forEach(b => {
             if (b.type === 'category') {
                 hasCategory = true;
-                if (collapsedCategories[b.name] === undefined) collapsedCategories[b.name] = false; // 기본은 펼쳐짐 상태
+                if (collapsedCategories[b.name] === undefined) collapsedCategories[b.name] = false; 
                 currentCatCollapsed = collapsedCategories[b.name];
 
                 const catEl = document.createElement('div');
@@ -632,28 +646,27 @@
                 catEl.innerHTML = `<span>📂 ${b.name}</span> <span>${currentCatCollapsed ? '▼' : '▲'}</span>`;
                 catEl.onclick = () => {
                     collapsedCategories[b.name] = !currentCatCollapsed;
-                    renderMenu(); // 폴딩 상태 토글 후 다시 그리기
+                    renderMenu(); 
                 };
                 list.appendChild(catEl);
             } 
             else if (b.type === 'divider') {
                 const divEl = document.createElement('div');
                 divEl.className = 'menu-divider';
-                if (!currentCatCollapsed) list.appendChild(divEl); // 상위 항목이 접혀있지 않을때만 표시
+                if (!currentCatCollapsed) list.appendChild(divEl); 
             } 
             else {
-                // 일반 게시판 (board)
                 const li = document.createElement('li');
                 li.innerHTML = `${b.name} <span style="float:right; font-size:10px; opacity:0.6; margin-top:2px;">R${b.readLevel}/W${b.writeLevel}</span>`;
                 if(b.name === currentBoard) li.className = "active";
-                if(hasCategory) li.classList.add('sub-board'); // 대항목 아래에 있으면 들여쓰기 적용
+                if(hasCategory) li.classList.add('sub-board'); 
 
                 li.onclick = () => {
                     switchBoard(b.name);
                     if(window.innerWidth <= 768) toggleMobileMenu();
                 };
                 
-                if (!currentCatCollapsed) list.appendChild(li); // 상위 항목이 접혀있지 않을때만 표시
+                if (!currentCatCollapsed) list.appendChild(li); 
             }
         });
     }
@@ -699,7 +712,6 @@
         let noticePosts = [];
         let recentPosts = [];
         
-        // type이 'board'인 항목만 필터링하여 권한 확인
         const readableBoards = boards.filter(b => b.type === 'board' || !b.type).filter(b => currentUserLevel >= b.readLevel);
 
         for (const b of readableBoards) {
@@ -710,21 +722,17 @@
                 const data = doc.data();
                 const postData = { id: doc.id, boardName: b.name, ...data };
                 
-                // [분할 로직] '공지사항' 게시판 글이면 왼쪽, 나머지는 오른쪽으로 분류
                 if (b.name === '공지사항') noticePosts.push(postData);
                 else recentPosts.push(postData);
             });
         }
 
-        // 최신 시간순으로 정렬
         noticePosts.sort((a, b) => b.timestamp - a.timestamp);
         recentPosts.sort((a, b) => b.timestamp - a.timestamp);
 
-        // 각각 최대 15개까지만 표기
         const displayNotices = noticePosts.slice(0, 15);
         const displayRecents = recentPosts.slice(0, 15);
 
-        // 테이블 출력 공통 함수
         const renderRows = (targetBody, postsList, isNoticeList) => {
             targetBody.innerHTML = "";
             if (postsList.length === 0) {
@@ -735,7 +743,7 @@
             postsList.forEach(data => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => { currentBoard = data.boardName; showDetail(data.id, data); };
-                if (isNoticeList) tr.className = "notice-row"; // 공지사항 테이블이면 핑크빛 배경 추가
+                if (isNoticeList) tr.className = "notice-row"; 
 
                 const isOwner = data.author === currentUserEmail;
                 const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
@@ -766,8 +774,8 @@
             });
         };
 
-        renderRows(noticeTbody, displayNotices, true); // 왼쪽: 공지사항 게시판 글
-        renderRows(recentTbody, displayRecents, false); // 오른쪽: 그 외 나머지 게시판 글
+        renderRows(noticeTbody, displayNotices, true); 
+        renderRows(recentTbody, displayRecents, false); 
     }
 
     // ==========================================
@@ -1312,7 +1320,6 @@
         loadMenu();
     }
 
-    // [수정] 대항목(카테고리), 절취선, 일반 게시판 구분하여 그리기
     function renderMenuEditArea() {
         const area = document.getElementById('menuEditArea');
         if (!area) return; 
@@ -1367,16 +1374,14 @@
         });
     }
 
-    // [추가] 항목 타입(category, divider, board)에 따라 메뉴 추가하기
     function addMenuItem(type) {
         let name = "";
         
         if (type === 'divider') {
-            name = "divider_" + Date.now(); // 시스템에서 구분을 위한 고유 난수 이름 부여
+            name = "divider_" + Date.now(); 
         } else {
             name = document.getElementById('newMenuInput').value.trim();
             if(!name) return alert("추가할 이름을 입력해 주세요.");
-            // 절취선이 아닌데 이름이 중복되는 경우 방지
             if(boards.some(b => b.type !== 'divider' && b.name === name)) return alert("이미 사용 중인 이름입니다.");
         }
         
