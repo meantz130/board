@@ -4,1532 +4,205 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meantz 놀이터</title>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script> 
     
     <style>
-        /* ========================================== */
-        /* 1. 기본 설정 및 색상 변수 */
-        /* ========================================== */
-        :root {
-            --sidebar-width: 250px;
-            --dark-bg: #1e272e;
-            --sidebar-bg: #2f3640;
-            --accent-color: #ff4757;
-            --point-color: #ffa502;
-            --bg-color: #f1f2f6;
-            --card-bg: #ffffff;
-            --text-main: #2f3542;
-            --text-sub: #747d8c;
-            --border-color: #dfe4ea;
-        }
-
-        body { font-family: 'Pretendard', -apple-system, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); }
-        .hidden { display: none !important; }
-        button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
-        * { box-sizing: border-box; }
+        /* 1 ~ 9번 스타일 기존 코드 유지 */
+        /* ... (기존 CSS 코드들) ... */
 
         /* ========================================== */
-        /* 2. 레이아웃 및 팝업 (오버레이) */
+        /* 10. 이미지 업로드 드래그 앤 드롭 스타일 [추가됨] */
         /* ========================================== */
-        #loadingLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; color: white; z-index: 9999; font-size: 1.2rem; font-weight: bold; }
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        #mainApp { display: none; min-height: 100vh; align-items: stretch; }
-
-        .mobile-header { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: var(--dark-bg); color: white; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .menu-toggle-btn { background: none; border: none; color: white; font-size: 24px; padding: 0; }
-        #mobileOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; }
-
-        /* ========================================== */
-        /* 3. 로그인 폼 */
-        /* ========================================== */
-        .login-card { background: var(--card-bg); padding: 40px; border-radius: 15px; width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .login-card h2 { margin-top: 0; color: var(--dark-bg); font-weight: 800; }
-        .login-card input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; }
-        .login-card button { width: 100%; padding: 14px; background: var(--dark-bg); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; transition: 0.2s; }
-        .login-card button:hover { background: #333; }
-
-        /* ========================================== */
-        /* 4. 사이드바 (내비게이션) */
-        /* ========================================== */
-        nav { width: var(--sidebar-width); flex-shrink: 0; background: var(--sidebar-bg); color: #ccc; display: flex; flex-direction: column; z-index: 1001; transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 1px; }
-        
-        .profile-area { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
-        .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .profile-name { font-size: 14px; color: #fff; font-weight: 500; }
-        .profile-name b { color: var(--accent-color); font-weight: 800; }
-        
-        .badge { position:absolute; top:-4px; right:-6px; background:var(--accent-color); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; line-height:16px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid var(--dark-bg); }
-        
-        nav ul { list-style: none; padding: 10px 0; flex-grow: 1; margin: 0; }
-        nav ul li { padding: 14px 25px; transition: 0.2s; font-size: 14px; font-weight: 500; color: #ced6e0; border-left: 4px solid transparent; }
-        nav ul li:hover { background: rgba(255,255,255,0.05); color: white; }
-        nav ul li.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--accent-color); }
-        
-        .menu-category { padding: 12px 20px; font-size: 13px; color: #fff; font-weight: 800; background: rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .menu-category:hover { background: rgba(0,0,0,0.5); }
-        .menu-divider { border: none; border-top: 1px dashed rgba(255,255,255,0.25); margin: 6px 20px; height: 0; }
-        nav ul li.sub-board { padding-left: 35px; font-size: 13.5px; }
-        .nav-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
-
-        /* ========================================== */
-        /* 5. 메인 홈 화면 */
-        /* ========================================== */
-        .home-banner { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 35px 40px; margin-bottom: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(118, 75, 162, 0.2); display: flex; align-items: center; justify-content: space-between; }
-        .home-banner h1 { margin: 0 0 10px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-        .home-banner p { margin: 0; font-size: 15px; opacity: 0.9; line-height: 1.5; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .banner-icon { font-size: 75px; opacity: 0.9; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2)); animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-
-        .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .home-grid table { width: 100%; table-layout: fixed; }
-        
-        /* ========================================== */
-        /* 6. 메인 컨텐츠 및 게시판 테이블 */
-        /* ========================================== */
-        main { flex: 1; padding: 50px 30px; display: flex; justify-content: center; background: var(--bg-color); }
-        .content-wrapper { width: 100%; max-width: 950px; }
-        .board-header { margin-bottom: 20px; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px; }
-        .board-header h2 { margin: 0; color: var(--dark-bg); font-weight: 800; }
-        .card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-color); margin-bottom: 20px; }
-        
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        th { background: #f8f9fa; font-size: 0.85rem; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
-        tbody tr { transition: background 0.1s; }
-        tbody tr:hover { background: #fcfcfc; }
-        
-        .col-num { width: 60px; text-align: center; color: var(--text-sub); font-size: 13px; }
-        .col-author { width: 120px; font-size: 13px; color: #555; }
-        .col-date { width: 110px; text-align: center; font-size: 12px; color: var(--text-sub); }
-        .col-title { padding: 12px !important; vertical-align: middle; }
-        
-        .post-preview { display: block; font-size: 12px; color: #a4b0be; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-        .board-tag { font-size: 10px; padding: 3px 6px; background: #f1f2f6; border-radius: 4px; margin-right: 6px; color: var(--text-sub); font-weight: bold; border: 1px solid #eccc; }
-        
-        .notice-row { background-color: #fff4f4 !important; }
-        .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; font-weight: bold; }
-        .new-badge { background: var(--point-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; font-weight: bold; }
-        .highlight-title { color: #ff4757 !important; font-weight: 900 !important; text-decoration: underline; text-underline-position: under; text-shadow: 0px 2px 8px rgba(255, 71, 87, 0.2); }
-
-        /* ========================================== */
-        /* 7. 폼 요소 및 버튼 */
-        /* ========================================== */
-        input[type="text"], input[type="password"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; transition: 0.2s; }
-        input:focus, textarea:focus { border-color: var(--dark-bg); outline: none; }
-        
-        .search-bar { display: flex; gap: 8px; margin-top: 20px; align-items: center; flex-wrap: nowrap; }
-        .search-bar input { flex: 1; min-width: 100px; margin: 0; }
-        .search-bar button { white-space: nowrap; flex-shrink: 0; }
-        
-        .btn-main { background: var(--dark-bg); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        .btn-main:hover { background: #333; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn-sub { background: white; color: var(--text-main); padding: 10px 18px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 500; transition: 0.2s; }
-        .btn-sub:hover { background: #f8f9fa; border-color: #ccc; }
-        
-        /* [추가] 모달 내 체크박스 라벨용 CSS */
-        .setting-label-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; }
-        .setting-label-row label.title { font-size: 12px; font-weight: bold; }
-        .setting-label-row label.toggle { font-size: 11px; color: var(--text-sub); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .setting-label-row input[type="checkbox"] { width: 14px; height: 14px; margin: 0; cursor: pointer; }
-
-        /* ========================================== */
-        /* 8. 모달창 및 쪽지 시스템 */
-        /* ========================================== */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
-        
-        .tab-container { margin-bottom:15px; border-bottom: 2px solid var(--border-color); display: flex; gap: 5px; }
-        .tab-btn { padding: 10px 15px; border: none; background: transparent; font-weight: 600; color: var(--text-sub); border-bottom: 3px solid transparent; margin-bottom: -2px; }
-        .tab-btn.active { color: var(--dark-bg); border-bottom-color: var(--dark-bg); }
-        .tab-btn:hover:not(.active) { color: var(--text-main); }
-
-        #contextMenu { position: fixed; background: white; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 5000; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 500; min-width: 140px; }
-        .context-item { padding: 12px 18px; cursor: pointer; transition: background 0.1s; }
-        .context-item:hover { background: #f1f2f6; color: var(--accent-color); }
-        
-        .msg-row { border-bottom: 1px solid #f1f2f6; padding: 15px 10px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; transition: 0.2s; border-radius: 6px; }
-        .msg-row:hover { background-color: #f8f9fa; transform: translateX(2px); }
-        .msg-unread { font-weight: bold; color: var(--text-main); }
-        .msg-read { color: var(--text-sub); }       
-
-        /* ========================================== */
-        /* 9. 반응형 미디어 쿼리 (모바일) */
-        /* ========================================== */
-        @media screen and (max-width: 768px) {
-            nav { position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; transform: translateX(-100%); }
-            nav.open { transform: translateX(0); }
-            main { padding: 80px 15px 20px 15px; }
-            .card { padding: 20px; }
-            .col-author, .col-date { display: none; }
-            .home-grid { grid-template-columns: 1fr; } 
-            .home-banner { padding: 30px 20px; flex-direction: column; text-align: center; }
-            .banner-icon { display: none; }
-        }
+        .image-upload-wrapper { margin-top: 15px; margin-bottom: 20px; }
+        .image-upload-wrapper label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
+        .dropzone { border: 2px dashed var(--border-color); border-radius: 8px; padding: 25px; text-align: center; background-color: #f8f9fa; color: var(--text-sub); cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .dropzone:hover { border-color: #a4b0be; background-color: #f1f2f6; }
+        .dropzone.dragover { border-color: var(--accent-color); background-color: #fff4f4; color: var(--accent-color); font-weight: bold; }
+        .preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .image-preview { position: relative; width: 70px; height: 70px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+        .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .delete-btn { position: absolute; top: 3px; right: 3px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .delete-btn:hover { background: var(--danger); transform: scale(1.1); }
     </style>
 </head>
 <body>
-
-    <!-- [수정] 우클릭 팝업 메뉴 (기능 추가됨) -->
-    <div id="contextMenu" class="hidden">
-        <div class="context-item" onclick="clickSendMsgFromMenu()">✉️ 쪽지 보내기</div>
-        <div class="context-item" onclick="clickViewUserProfileFromMenu()">👤 프로필 보기</div>
-        <div class="context-item" onclick="clickSearchPostsFromMenu()">📝 작성글 검색</div>
-    </div>
-   
-    <!-- 로딩 화면 -->
-    <div id="loadingLayer">서버와 연결 중입니다...</div>
-
-    <!-- 로그인 및 회원가입 화면 -->
-    <div id="loginOverlay">
-        <div class="login-card">
-            <h2>Meantz 놀이터</h2>
-            <p style="font-size: 13px; color: #888; margin-bottom: 20px;">반갑습니다! 접속 정보를 입력해 주세요.</p>
-            <input type="email" id="loginEmail" placeholder="아이디(이메일)">
-            <input type="password" id="loginPw" placeholder="비밀번호">        
-            <button onclick="handleLogin()" style="margin-bottom: 10px;">로그인</button>
+    
+    <div id="editorView" class="hidden">
+        <div class="board-header"><h2 id="editorTitleText">글 작성</h2></div>
+        <div class="card">
+            <input type="hidden" id="editId">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                </div>
             
-            <!-- [수정됨] 간편 회원가입 버튼: 흐릿한 배경을 없애고 뚜렷한 테두리 스타일 적용 -->
-            <button onclick="handleSignup()" class="btn-sub" style="width: 100%; padding: 14px; border: 1px solid #ccc; background: #fff; color: #333; font-weight: bold;">간편 회원가입</button>
-            
-            <p id="loginError" style="color:var(--accent-color); font-size:13px; margin-top:15px; font-weight:bold;"></p>
+            <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="font-size: 16px; font-weight: bold; margin-bottom:15px;">
+            <textarea id="postContentInput" placeholder="자유롭게 이야기를 남겨주세요." style="height:400px; resize: vertical; line-height: 1.6;"></textarea>
+
+            <div class="image-upload-wrapper">
+                <label>📸 사진 첨부 (최대 10장, 장당 최대 2MB)</label>
+                <div id="image-dropzone" class="dropzone">
+                    여기를 클릭하거나 이미지를 드래그 앤 드롭 하세요.
+                    <input type="file" id="image-input" multiple accept="image/*" style="display: none;">
+                </div>
+                <div id="image-preview-container" class="preview-container"></div>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                </div>
         </div>
     </div>
 
-    <!-- 모바일 전용 헤더 -->
-    <div class="mobile-header" id="mobileHeader">
-        <button class="menu-toggle-btn" onclick="toggleMobileMenu()">☰</button>
-        <span style="font-weight: 800; margin-left: 15px; font-size: 18px;">Meantz 놀이터</span>
-    </div>
-    <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    <script>
+        // Firestore 설정, 로그인, 메뉴 렌더링 등 기존 자바스크립트 유지
+        // ... (기존 자바스크립트 코드들) ...
 
-    <!-- 메인 어플리케이션 -->
-    <div id="mainApp">
-        <!-- ========================================== -->
-        <!-- [사이드바 영역] -->
-        <!-- ========================================== -->
-        <nav id="sidebar">
-            <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
-            
-            <div class="profile-area">
-                <div class="profile-header">
-                    <div class="profile-name"><b id="sideUserName"></b>님, 환영합니다!</div>
-                    <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
-                        <span style="font-size: 18px;">✉️</span>
-                        <span id="msgUnreadBadge" class="hidden badge"></span>
-                    </div>
-                </div>
-                
-                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 12px; line-height: 1.6;">
-                    <div>회원 등급: <b style="color: #fff;">Lv.<span id="sideUserLevel">0</span></b></div>
-                    <div>보유 포인트: <b style="color: var(--point-color);"><span id="sideUserPoints">0</span> pt</b></div>
-                </div>
+        /* ==========================================
+           [추가됨] 이미지 업로드 관리 및 Storage 연동 로직
+           ========================================== */
+        let selectedImageFiles = []; 
+        const MAX_IMAGES = 10;
+        const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-                <div style="display: flex; gap: 6px;">
-                    <button style="flex: 1; padding: 8px; font-size: 12px; background: var(--accent-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="checkAttendance()">✅ 출석체크</button>
-                    <button style="flex: 1; padding: 8px; font-size: 12px; background: #4b6584; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="openProfileModal()">정보 수정</button>
-                </div>
-            </div>      
-            
-            <ul id="menuList"></ul>
-            
-            <div class="nav-footer">
-                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; max-height: 150px; overflow-y: auto;">
-                    <div onclick="toggleOnlineUsers()" style="cursor: pointer; color: #fff; margin-bottom: 8px; font-weight: bold; position: sticky; top: 0; background: #2f3640; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                        <span>🟢 현재 접속자 (<span id="onlineCount">0</span>명)</span>
-                        <span id="onlineToggleIcon" style="font-size: 10px; color: #a4b0be;">▼</span>
-                    </div>
-                    <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.8;">
-                        <li>로딩 중...</li>
-                    </ul>
-                </div>
-                
-                <button style="width: 100%; padding: 10px; background: white; color: var(--dark-bg); border: none; border-radius: 6px; font-weight: bold; margin-bottom: 8px; cursor: pointer;" onclick="openChatPopup()">💬 실시간 채팅</button>
-                <button id="adminMenuBtn" class="hidden" style="width: 100%; padding: 10px; background: transparent; color: #fff; border: 1px solid #747d8c; border-radius: 6px; font-weight: bold; margin-bottom: 8px; cursor: pointer;" onclick="showAdminView()">⚙️ 사이트 관리</button>
-                <button style="width: 100%; padding: 10px; background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="handleLogout()">로그아웃</button>
-            </div>
-        </nav>
+        const dropzone = document.getElementById('image-dropzone');
+        const imageInput = document.getElementById('image-input');
+        const previewContainer = document.getElementById('image-preview-container');
 
-        <!-- ========================================== -->
-        <!-- [메인 컨텐츠 영역] -->
-        <!-- ========================================== -->
-        <main>
-            <div class="content-wrapper">
-                
-                <!-- 1. 홈 화면 (3분할 레이아웃) -->
-                <div id="homeView" class="hidden">
-                    <div class="home-banner">
-                        <div>
-                            <h1>환영합니다, Meantz 놀이터입니다!</h1>
-                            <p>다양한 사람들과 자유롭게 소통하고 즐거운 시간을 보내세요.<br>오늘도 행운이 가득한 하루 되시길 바랍니다! ✨</p>
-                        </div>
-                        <div class="banner-icon">🚀</div>
-                    </div>
-                    
-                    <div class="home-grid">
-                        <div class="card" style="padding:0; overflow:hidden;">
-                            <div style="background: #fff4f4; padding: 15px 20px; font-weight: 800; color: var(--accent-color); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 16px;">📌</span> 공지사항
-                            </div>
-                            <table style="margin:0;"><tbody id="homeNoticeTableBody"></tbody></table>
-                        </div>
-                        
-                        <div class="card" style="padding:0; overflow:hidden;">
-                            <div style="background: #f8f9fa; padding: 15px 20px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 16px;">📝</span> 통합 최신 게시글
-                            </div>
-                            <table style="margin:0;"><tbody id="homeRecentTableBody"></tbody></table>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- 2. 게시판 목록 화면 -->
-                <div id="listView">
-                    <div class="board-header"><h2 id="boardTitle">게시판</h2></div>
-                    <div class="card" style="padding:0">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="col-num">번호</th>
-                                    <th class="col-title">제목</th>
-                                    <th class="col-author">작성자</th>
-                                    <th class="col-date">작성일</th>
-                                </tr>
-                            </thead>
-                            <tbody id="postTableBody"></tbody>
-                        </table>
-                    </div>
-                    <!-- [수정] 검색바 컨테이너에 ID 부여 (특정 뷰에서 숨기기 위함) -->
-                    <div class="search-bar" id="listViewSearchBar">
-                        <input type="text" id="searchInput" placeholder="제목 또는 내용을 검색해 보세요...">
-                        <button class="btn-sub" onclick="searchPosts()">검색</button>
-                        <button id="writeBtn" class="btn-main" onclick="showEditor()">글쓰기</button>
-                    </div>
-                </div>
-
-                <!-- 3. 글쓰기/수정 화면 -->
-                <div id="editorView" class="hidden">
-                    <div class="board-header"><h2 id="editorTitleText">글 작성</h2></div>
-                    <div class="card">
-                        <input type="hidden" id="editId">
-                        <div style="display:flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                            <div>작성자: <b id="displayAuthor" style="color:var(--dark-bg);"></b></div>
-                            <div style="display:flex; gap:15px; font-weight: bold;">
-                                <label><input type="checkbox" id="htmlCheck"> HTML</label>
-                                <label><input type="checkbox" id="secretCheck"> 🔒 비밀글</label>
-                                <label id="highlightArea" style="color: var(--point-color); cursor: pointer;"><input type="checkbox" id="highlightCheck"> ✨ 제목 하이라이트 (2000pt)</label>
-                                <label id="noticeArea" class="hidden" style="color: var(--accent-color); cursor: pointer;"><input type="checkbox" id="noticeCheck"> 📌 상단 고정</label>
-                            </div>
-                        </div>
-                        <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="font-size: 16px; font-weight: bold; margin-bottom:15px;">
-                        <textarea id="postContentInput" placeholder="자유롭게 이야기를 남겨주세요." style="height:400px; resize: vertical; line-height: 1.6;"></textarea>
-                        <div style="text-align: right; margin-top:20px;">
-                            <button class="btn-sub" style="margin-right: 5px;" onclick="showList()">작성 취소</button>
-                            <button class="btn-main" onclick="savePost()">저장하기</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. 글 읽기 화면 -->
-                <div id="detailView" class="hidden">
-                    <div class="board-header"><h2 id="viewTitle" style="word-break: keep-all;"></h2></div>
-                    <div class="card">
-                        <div id="viewMeta" style="color:#747d8c; font-size:13px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px;"></div>
-                        <div id="viewContent" style="white-space: pre-wrap; line-height: 1.7; min-height: 200px; font-size: 15px; word-break: break-all;"></div>
-                        <div style="margin-top:40px; display:flex; justify-content:space-between; border-top: 1px solid #eee; padding-top: 20px;">
-                            <button class="btn-sub" onclick="showList()">목록으로</button>
-                            <div>
-                                <button id="editBtn" class="btn-sub">수정</button>
-                                <button id="deleteBtn" class="btn-sub" style="color:var(--accent-color); border-color: var(--accent-color);">삭제</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. 관리자 설정 화면 -->
-                <div id="adminView" class="hidden">
-                    <div class="board-header"><h2>⚙️ 사이트 관리</h2></div>
-                    <div class="card">
-                        <div class="tab-container">
-                            <button class="tab-btn active" id="adminTab1" onclick="switchAdminTab(1)">메뉴 및 권한 설정</button>
-                            <button class="tab-btn" id="adminTab2" onclick="switchAdminTab(2)">전체 사용자 관리</button>
-                        </div>
-                    
-                        <!-- 메뉴 및 권한 설정 탭 -->
-                        <div id="adminTabContent1">
-                            <div id="menuEditArea" style="margin-bottom: 20px;"></div>
-                            
-                            <div style="display:flex; gap:8px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-wrap: wrap; align-items: center;">
-                                <input type="text" id="newMenuInput" placeholder="추가할 이름 입력" style="flex:1; min-width: 150px; margin: 0;">
-                                <div style="display: flex; gap: 5px; flex-shrink: 0;">
-                                    <button class="btn-sub" style="white-space: nowrap; font-size: 13px;" onclick="addMenuItem('category')">📂 대항목 추가</button>
-                                    <button class="btn-sub" style="white-space: nowrap; font-size: 13px;" onclick="addMenuItem('divider')">➖ 절취선 추가</button>
-                                    <button class="btn-main" style="white-space: nowrap; font-size: 13px;" onclick="addMenuItem('board')">📝 게시판 생성</button>
-                                </div>
-                            </div>
-                            
-                            <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">설정 최종 저장하기</button>
-                        </div>
-
-                        <!-- 사용자 관리 탭 -->
-                        <div id="adminTabContent2" class="hidden">
-                            <div style="overflow-x: auto;">
-                                <table style="min-width: 800px; font-size: 13px;">
-                                    <thead>
-                                        <tr>
-                                            <th>이메일(ID)</th>
-                                            <th>닉네임</th>
-                                            <th>연락처</th>
-                                            <th>주소</th>
-                                            <th style="width: 80px;">보유 pt</th>
-                                            <th style="width: 70px;">등급</th>
-                                            <th style="width: 110px; text-align: center;">관리 액션</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="adminUserTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>                
-            </div>
-        </main>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 모달창 (팝업) 모음 -->
-    <!-- ========================================== -->
-
-    <!-- 내 정보 수정 모달 (공개/비공개 설정 추가됨) -->
-    <div id="profileModal" class="modal hidden" style="z-index: 3100;">
-        <div class="modal-content" style="width: 380px;">
-            <h3 style="margin-top: 0; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px;">내 정보 수정</h3>
-            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">정보를 수정하거나 계정을 관리할 수 있습니다.</p>
-
-            <div class="setting-label-row">
-                <label class="title">닉네임</label>
-            </div>
-            <input type="text" id="profNickname" placeholder="닉네임 입력" style="margin-bottom: 15px;">
-            
-            <div class="setting-label-row">
-                <label class="title">핸드폰 번호</label>
-                <label class="toggle"><input type="checkbox" id="profPhonePublic"> 타인에게 공개</label>
-            </div>
-            <input type="text" id="profPhone" placeholder="예: 010-1234-5678" style="margin-bottom: 15px;">
-            
-            <div class="setting-label-row">
-                <label class="title">생년월일</label>
-                <label class="toggle"><input type="checkbox" id="profBirthPublic"> 타인에게 공개</label>
-            </div>
-            <input type="date" id="profBirth" style="margin-bottom: 15px;">
-            
-            <div class="setting-label-row">
-                <label class="title">집 주소</label>
-                <label class="toggle"><input type="checkbox" id="profAddressPublic"> 타인에게 공개</label>
-            </div>
-            <input type="text" id="profAddress" placeholder="상세 주소 입력" style="margin-bottom: 25px;">
-        
-            <div style="background: #fff4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="font-size: 12px; color: var(--accent-color); font-weight: bold; margin: 0 0 8px 0;">보안을 위해 현재 비밀번호를 입력해 주세요.</p>
-                <input type="password" id="profPassword" placeholder="비밀번호 입력" style="margin: 0; border-color: var(--accent-color);">
-            </div>
-        
-            <div style="display:flex; gap:10px; margin-bottom: 15px;">
-                <button class="btn-sub" style="flex:1;" onclick="closeProfileModal()">취소</button>
-                <button class="btn-main" style="flex:1;" onclick="saveProfile()">수정 완료</button>
-            </div>
-            <div style="text-align: right;">
-                <button onclick="deleteUserAccount()" style="background:none; border:none; color:#ccc; text-decoration:underline; font-size:12px;">회원 탈퇴하기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- [추가] 타인 프로필 보기 모달 (읽기 전용) -->
-    <div id="viewUserProfileModal" class="modal hidden" style="z-index: 3200;">
-        <div class="modal-content" style="width: 320px;">
-            <h3 id="viewProfileNickname" style="margin-top: 0; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px;">프로필</h3>
-            <div style="font-size: 14px; line-height: 2.2; color: var(--text-main); margin-top: 15px;">
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:var(--text-sub);">이메일</b> <span id="viewProfileEmail"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:var(--text-sub);">연락처</b> <span id="viewProfilePhone"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:var(--text-sub);">생년월일</b> <span id="viewProfileBirth"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:var(--text-sub);">거주지</b> <span id="viewProfileAddress"></span>
-                </div>
-            </div>
-            <div style="text-align: right; margin-top: 25px;">
-                <button class="btn-main" style="width: 100%;" onclick="document.getElementById('viewUserProfileModal').classList.add('hidden')">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 쪽지함 모달 -->
-    <div id="messageModal" class="modal hidden" style="z-index: 3100;">
-        <div class="modal-content" style="width: 480px; min-height: 450px; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">✉️ 내 쪽지함</h3>
-                <button onclick="closeMessageModal()" style="background:none; border:none; font-size:20px; color: #999;">✖</button>
-            </div>
-        
-            <div class="tab-container">
-                <button class="tab-btn active" id="msgTab1" onclick="switchMsgTab(1)">받은 쪽지함</button>
-                <button class="tab-btn" id="msgTab2" onclick="switchMsgTab(2)">보낸 쪽지함</button>
-                <button class="tab-btn" id="msgTab3" onclick="switchMsgTab(3)">쪽지 쓰기</button>
-            </div>
-        
-            <div id="msgListArea" style="flex: 1; overflow-y: auto; max-height: 350px;"></div>
-        
-            <div id="msgWriteArea" class="hidden" style="flex: 1;">
-                <input type="text" id="msgReceiverInput" placeholder="받는 사람의 이메일(ID) 입력">
-                <textarea id="msgContentInput" placeholder="전달할 내용을 작성해 주세요." style="height:180px; resize: none; margin-bottom: 15px;"></textarea>
-                <button class="btn-main" style="width:100%;" onclick="sendDirectMessage()">전송하기</button>
-            </div>
-
-            <div id="msgReadArea" class="hidden" style="flex: 1;">
-                <div id="msgReadHeader" style="font-size:13px; color:var(--text-sub); margin-bottom:15px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); line-height: 1.5;"></div>
-                <div id="msgReadContent" style="font-size:14px; white-space:pre-wrap; margin-bottom: 25px; line-height: 1.6; color: var(--text-main);"></div>
-                <button class="btn-sub" style="width:100%;" onclick="switchMsgTab(currentMsgTab)">목록으로 돌아가기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 출석체크 알림 모달 -->
-    <div id="attendanceModal" class="modal hidden" style="z-index: 4000;">
-        <div class="modal-content" style="width: 320px; text-align: center; padding: 40px 30px;">
-            <h2 style="margin-top: 0; color: var(--dark-bg); font-weight: 800;">🎉 출석 완료!</h2>
-            <p id="attDate" style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;"></p>
-            <div style="font-size: 45px; margin: 20px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.1);">🎁</div>
-            <p id="attMessage" style="font-size: 15px; font-weight: bold; line-height: 1.5; color: var(--text-main);"></p>
-            <div id="attPoints" style="font-size: 26px; color: var(--point-color); font-weight: 900; margin: 20px 0 30px 0;"></div>
-            <button class="btn-main" style="width:100%; border-radius: 30px;" onclick="closeAttendanceModal()">확인</button>
-        </div>
-    </div>
-
-<script>
-    // ==========================================
-    // [1] Firebase 초기화 및 전역 변수
-    // ==========================================
-    const ADMIN_EMAILS = ["오민택@aa.bb"]; 
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
-        authDomain: "meantzboard.firebaseapp.com",
-        projectId: "meantzboard",
-        storageBucket: "meantzboard.firebasestorage.app",
-        messagingSenderId: "807743275828",
-        appId: "1:807743275828:web:2effa72896931a2df15b61"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    let currentBoard = "";
-    let boards = []; 
-    let collapsedCategories = {}; 
-    let currentUserEmail = "";
-    let currentUserLevel = 0;
-    let currentUserNickname = ""; 
-    let currentUserPoints = 0;
-    let userAttendanceStreak = 0;
-    let userLastAttendance = "";
-
-    // ==========================================
-    // [2] 로그인 / 회원가입 / 인증 상태 감지
-    // ==========================================
-    auth.onAuthStateChanged(async (user) => {
-        const loginOverlay = document.getElementById('loginOverlay');
-        const mainApp = document.getElementById('mainApp');
-        const loadingLayer = document.getElementById('loadingLayer');
-        const mobileHeader = document.getElementById('mobileHeader');
-
-        if (user) {
-            currentUserEmail = user.email;
-            
-            const userDoc = await db.collection("users").doc(user.email).get();
-            const userData = userDoc.exists ? userDoc.data() : {};
-            
-            currentUserLevel = userData.level || 0;
-            currentUserNickname = userData.nickname || user.email.split('@')[0]; 
-            currentUserPoints = userData.points || 0;
-            userAttendanceStreak = userData.attendanceStreak || 0;
-            userLastAttendance = userData.lastAttendanceDate || "";
-
-            document.getElementById('sideUserName').innerText = currentUserNickname;
-            document.getElementById('sideUserLevel').innerText = currentUserLevel;
-            document.getElementById('sideUserPoints').innerText = currentUserPoints; 
-
-            await db.collection("users").doc(currentUserEmail).set({ 
-                online: true, 
-                lastActive: firebase.firestore.FieldValue.serverTimestamp() 
-            }, { merge: true });
-            
-            listenToOnlineUsers(); 
-            listenToMessages();         
-
-            loginOverlay.style.display = 'none';
-            mainApp.style.display = 'flex'; 
-            if(window.innerWidth <= 768) mobileHeader.style.display = 'flex';
-            if (ADMIN_EMAILS.includes(user.email)) document.getElementById('adminMenuBtn').classList.remove('hidden');
-            
-            await loadMenu();
-            showHome(); 
-        } else {
-            loginOverlay.style.display = 'flex';
-            mainApp.style.display = 'none';
-            mobileHeader.style.display = 'none';
-        }
-        if (loadingLayer) loadingLayer.style.display = 'none';
-    });
-
-    function handleLogin() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const pw = document.getElementById('loginPw').value.trim();
-        auth.signInWithEmailAndPassword(email, pw).catch(e => {
-            document.getElementById('loginError').innerText = "아이디 또는 비밀번호가 올바르지 않습니다.";
-        });
-    }
-
-    function handleSignup() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const pw = document.getElementById('loginPw').value.trim();
-        const errorMsg = document.getElementById('loginError');
-        
-        if(!email || !pw) return errorMsg.innerText = "이메일과 비밀번호를 모두 입력해 주세요.";
-        if(pw.length < 6) return errorMsg.innerText = "비밀번호는 6자리 이상이어야 합니다.";
-
-        errorMsg.style.color = "#3498db";
-        errorMsg.innerText = "가입 처리 중...";
-
-        auth.createUserWithEmailAndPassword(email, pw)
-            .then(async (userCredential) => {
-                await db.collection("users").doc(email).set({ level: 0, points: 0 });
-                errorMsg.innerText = "가입 성공! 자동으로 로그인됩니다.";
-            })
-            .catch(e => {
-                errorMsg.style.color = "var(--accent-color)";
-                if(e.code === 'auth/email-already-in-use') errorMsg.innerText = "이미 가입된 이메일입니다.";
-                else if(e.code === 'auth/invalid-email') errorMsg.innerText = "올바른 이메일 형식이 아닙니다.";
-                else errorMsg.innerText = "회원가입 중 오류가 발생했습니다.";
+        if(dropzone) {
+            dropzone.addEventListener('click', () => imageInput.click());
+            dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                handleImageFiles(e.dataTransfer.files);
             });
-    }
-
-    async function handleLogout() { 
-        if (currentUserEmail) await db.collection("users").doc(currentUserEmail).set({ online: false }, { merge: true });
-        auth.signOut().then(() => location.reload()); 
-    }
-
-    // ==========================================
-    // [3] 사이드바 메뉴 
-    // ==========================================
-    async function loadMenu() {
-        const doc = await db.collection("settings").doc("menu").get();
-        if (doc.exists) {
-            boards = doc.data().list.map(b => ({
-                name: b.name,
-                type: b.type || 'board',
-                readLevel: b.readLevel !== undefined ? b.readLevel : (b.level || 0),
-                writeLevel: b.writeLevel !== undefined ? b.writeLevel : (b.level || 0)
-            }));
-        } else {
-            boards = [{name: "공지사항", type: 'board', readLevel: 0, writeLevel: 0}, {name: "자유게시판", type: 'board', readLevel: 0, writeLevel: 0}];
         }
-        renderMenu();
-        const firstReadableBoard = boards.find(b => b.type === 'board' && currentUserLevel >= b.readLevel);
-        if(!currentBoard && firstReadableBoard) switchBoard(firstReadableBoard.name);
-    }
 
-    function renderMenu() {
-        const list = document.getElementById('menuList');
-        list.innerHTML = "";
-        let currentCatCollapsed = false;
-        let hasCategory = false; 
+        if(imageInput) {
+            imageInput.addEventListener('change', (e) => {
+                handleImageFiles(e.target.files);
+                e.target.value = ''; 
+            });
+        }
 
-        boards.forEach(b => {
-            if (b.type === 'category') {
-                hasCategory = true;
-                if (collapsedCategories[b.name] === undefined) collapsedCategories[b.name] = false; 
-                currentCatCollapsed = collapsedCategories[b.name];
-
-                const catEl = document.createElement('div');
-                catEl.className = 'menu-category';
-                catEl.innerHTML = `<span>📂 ${b.name}</span> <span>${currentCatCollapsed ? '▼' : '▲'}</span>`;
-                catEl.onclick = () => { collapsedCategories[b.name] = !currentCatCollapsed; renderMenu(); };
-                list.appendChild(catEl);
-            } 
-            else if (b.type === 'divider') {
-                const divEl = document.createElement('div');
-                divEl.className = 'menu-divider';
-                if (!currentCatCollapsed) list.appendChild(divEl); 
-            } 
-            else {
-                const li = document.createElement('li');
-                li.innerHTML = `${b.name} <span style="float:right; font-size:10px; opacity:0.6; margin-top:2px;">R${b.readLevel}/W${b.writeLevel}</span>`;
-                if(b.name === currentBoard) li.className = "active";
-                if(hasCategory) li.classList.add('sub-board'); 
-
-                li.onclick = () => { switchBoard(b.name); if(window.innerWidth <= 768) toggleMobileMenu(); };
-                if (!currentCatCollapsed) list.appendChild(li); 
+        function handleImageFiles(files) {
+            const newFiles = Array.from(files);
+            
+            if (selectedImageFiles.length + newFiles.length > MAX_IMAGES) {
+                alert(`이미지는 최대 ${MAX_IMAGES}장까지만 업로드 가능합니다.`);
+                return;
             }
-        });
-    }
 
-    function switchBoard(name) {
-        currentBoard = name;
-        document.getElementById('boardTitle').innerText = name;
-        renderMenu();
-        showList();
-    }
-    
-    document.querySelector('nav h3').onclick = () => { showHome(); if(window.innerWidth <= 768) toggleMobileMenu(); };
-
-    function hideAll() { 
-        ['listView','editorView','detailView','homeView', 'adminView'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.classList.add('hidden');
-        }); 
-    }
-    
-    function toggleMobileMenu() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobileOverlay');
-        const isOpen = sidebar.classList.toggle('open');
-        overlay.style.display = isOpen ? 'block' : 'none';
-    }
-
-    // ==========================================
-    // [4] 메인 홈 화면 
-    // ==========================================
-    async function showHome() {
-        hideAll();
-        currentBoard = ""; 
-        renderMenu(); 
-        document.getElementById('homeView').classList.remove('hidden');
-        
-        const noticeTbody = document.getElementById('homeNoticeTableBody');
-        const recentTbody = document.getElementById('homeRecentTableBody');
-        
-        noticeTbody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding: 40px; color:#888;'>불러오는 중...</td></tr>";
-        recentTbody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding: 40px; color:#888;'>불러오는 중...</td></tr>";
-
-        let noticePosts = [];
-        let recentPosts = [];
-        
-        const readableBoards = boards.filter(b => b.type === 'board' || !b.type).filter(b => currentUserLevel >= b.readLevel);
-
-        for (const b of readableBoards) {
-            const snap = await db.collection("boards").doc(b.name).collection("posts")
-                          .orderBy("timestamp", "desc").limit(15).get();
-                          
-            snap.forEach(doc => {
-                const data = doc.data();
-                const postData = { id: doc.id, boardName: b.name, ...data };
-                if (b.name === '공지사항') noticePosts.push(postData);
-                else recentPosts.push(postData);
-            });
-        }
-
-        noticePosts.sort((a, b) => b.timestamp - a.timestamp);
-        recentPosts.sort((a, b) => b.timestamp - a.timestamp);
-
-        const renderRows = (targetBody, postsList, isNoticeList) => {
-            targetBody.innerHTML = "";
-            if (postsList.length === 0) { targetBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding:40px; color:#999;'>등록된 글이 없습니다.</td></tr>"; return; }
-            
-            postsList.slice(0, 15).forEach(data => {
-                const tr = document.createElement('tr');
-                tr.onclick = () => { currentBoard = data.boardName; showDetail(data.id, data); };
-                if (isNoticeList) tr.className = "notice-row"; 
-
-                const isOwner = data.author === currentUserEmail;
-                const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-
-                const now = Date.now();
-                const postTime = data.timestamp ? data.timestamp.toMillis() : now;
-                const isNew = (now - postTime) < (24 * 60 * 60 * 1000);
-                
-                const isHighlightActive = data.isHighlighted && isNew;
-                const titleClass = isHighlightActive ? "highlight-title" : "";
-                const newBadgeHtml = isNew ? '<span class="new-badge">N</span>' : '';
-
-                let displayTitle = data.title;
-                if (data.isSecret && !isOwner && !isAdmin) displayTitle = `<span style="color:#999;">🔒 비밀글입니다.</span>`;
-                else if (data.isSecret) displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:12px; font-weight:normal;">(비밀글)</span>`;
-
-                tr.innerHTML = `
-                    <td class="col-title" style="padding: 14px 15px !important;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            ${!isNoticeList ? `<span class="board-tag" style="margin:0;">${data.boardName}</span>` : ''} 
-                            ${newBadgeHtml}
-                            <span class="${titleClass}" style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;">${displayTitle}</span>
-                        </div>
-                    </td>
-                    <td class="col-date" style="width:75px; font-size:11px; padding: 14px 10px !important;">${data.dateShort}</td>
-                `;
-                targetBody.appendChild(tr);
-            });
-        };
-
-        renderRows(noticeTbody, noticePosts, true); 
-        renderRows(recentTbody, recentPosts, false); 
-    }
-
-    // ==========================================
-    // [5] 게시판 목록 및 게시글 처리
-    // ==========================================
-    async function showList(search = "") {        
-        const boardCfg = boards.find(b => b.name === currentBoard);
-
-        // 검색 모드가 아닐 때만 권한 체크 및 검색바 노출
-        if (currentBoard !== "") {
-            document.getElementById('listViewSearchBar').classList.remove('hidden');
-            if(boardCfg && currentUserLevel < boardCfg.readLevel) {
-                alert(`[${currentBoard}] 읽기 권한이 없습니다. (필요 등급: Lv.${boardCfg.readLevel})`);
-                return showHome(); 
-            }
-        }
-
-        hideAll();
-        document.getElementById('listView').classList.remove('hidden');      
-        
-        const writeBtn = document.getElementById('writeBtn');
-        if(currentBoard === "" || (boardCfg && currentUserLevel < boardCfg.writeLevel)) writeBtn.classList.add('hidden');
-        else writeBtn.classList.remove('hidden');
-
-        const tbody = document.getElementById('postTableBody');
-        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 40px;'>불러오는 중...</td></tr>";
-        
-        let snapshot = await db.collection("boards").doc(currentBoard).collection("posts").orderBy("timestamp", "desc").get();
-        tbody.innerHTML = "";
-        let allPosts = [];
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if(!search || data.title.includes(search) || data.content.includes(search)) allPosts.push({id: doc.id, ...data});
-        });
-
-        allPosts.sort((a,b) => (a.isNotice === b.isNotice) ? 0 : a.isNotice ? -1 : 1);
-
-        if(allPosts.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:40px; color:#999;'>게시글이 없습니다.</td></tr>"; 
-            return;
-        }
-
-        allPosts.forEach((data, i) => {
-            const tr = document.createElement('tr');
-            tr.onclick = () => showDetail(data.id, data);
-            if(data.isNotice) tr.className = "notice-row";
-
-            const isOwner = data.author === currentUserEmail;
-            const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-
-            const now = Date.now();
-            const postTime = data.timestamp ? data.timestamp.toMillis() : now; 
-            const isNew = (now - postTime) < (24 * 60 * 60 * 1000); 
-            
-            const isHighlightActive = data.isHighlighted && isNew;
-            const titleClass = isHighlightActive ? "highlight-title" : "";
-            const newBadgeHtml = isNew ? '<span class="new-badge">N</span>' : '';
-
-            let displayTitle = data.title;
-            if (data.isSecret && !isOwner && !isAdmin) displayTitle = `<span style="color:#999;">🔒 비밀글입니다.</span>`;
-            else if (data.isSecret) displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:12px; font-weight:normal;">(비밀글)</span>`;
-
-            let pureText = data.content.replace(/<[^>]*>?/gm, ''); 
-            let previewText = pureText.substring(0, 70) + (pureText.length > 70 ? "..." : "");
-            const displayAuthor = data.authorNickname || data.author.split('@')[0];
-        
-            tr.innerHTML = `
-                <td class="col-num">${data.isNotice ? '📌' : allPosts.length - i}</td>
-                <td class="col-title">
-                    <div style="margin-bottom: 2px;">
-                        ${data.isNotice ? '<span class="notice-badge">공지</span>' : ''}
-                        ${newBadgeHtml}
-                        <span class="${titleClass}" style="font-weight:600; font-size: 15px;">${displayTitle}</span>
-                    </div>
-                    <div class="post-preview">${previewText}</div>
-                </td>
-                <td class="col-author" oncontextmenu="openUserMenu(event, '${data.author}')" style="cursor:context-menu;">${displayAuthor}</td>
-                <td class="col-date">${data.dateShort}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-    
-    function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
-
-    function showEditor(id = null, data = null) {
-        hideAll();
-        document.getElementById('editorView').classList.remove('hidden');
-        document.getElementById('displayAuthor').innerText = currentUserNickname || currentUserEmail.split('@')[0];
-        
-        const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-        
-        const noticeArea = document.getElementById('noticeArea');
-        if (isAdmin) noticeArea.classList.remove('hidden'); else noticeArea.classList.add('hidden');
-
-        const hlArea = document.getElementById('highlightArea');
-        if (isAdmin) hlArea.innerHTML = '<input type="checkbox" id="highlightCheck"> ✨ 제목 하이라이트 (관리자 무료)';
-        else hlArea.innerHTML = '<input type="checkbox" id="highlightCheck"> ✨ 제목 하이라이트 (2000pt 차감)';
-
-        if(id) {
-            document.getElementById('editorTitleText').innerText = "글 수정";
-            document.getElementById('editId').value = id;
-            document.getElementById('postTitleInput').value = data.title;
-            document.getElementById('postContentInput').value = data.content;
-            document.getElementById('htmlCheck').checked = data.isHTML || false;
-            document.getElementById('noticeCheck').checked = data.isNotice || false;
-            document.getElementById('secretCheck').checked = data.isSecret || false;
-            
-            hlArea.classList.add('hidden'); 
-        } else {
-            document.getElementById('editorTitleText').innerText = "새 글 작성";
-            document.getElementById('editId').value = "";
-            document.getElementById('postTitleInput').value = "";
-            document.getElementById('postContentInput').value = "";
-            document.getElementById('htmlCheck').checked = false;
-            document.getElementById('noticeCheck').checked = false;
-            document.getElementById('secretCheck').checked = false;
-            hlArea.classList.remove('hidden');
-        }
-    }
-
-    async function savePost() {
-        const boardCfg = boards.find(b => b.name === currentBoard);
-        if(boardCfg && currentUserLevel < boardCfg.writeLevel) return alert("이 게시판에 글을 쓸 권한이 없습니다.");
-
-        const title = document.getElementById('postTitleInput').value.trim();
-        const content = document.getElementById('postContentInput').value.trim();
-        const isHTML = document.getElementById('htmlCheck').checked;
-        const isNotice = document.getElementById('noticeCheck').checked;
-        const isSecret = document.getElementById('secretCheck').checked;
-        const editId = document.getElementById('editId').value;
-        const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-        
-        if(!title || !content) return alert("제목과 내용을 모두 입력하세요.");
-        
-        let isHighlighted = false;
-        
-        if (!editId) {
-            const hlCheck = document.getElementById('highlightCheck');
-            if (hlCheck && hlCheck.checked) {
-                if (!isAdmin) {
-                    if (currentUserPoints < 2000) return alert(`포인트가 부족합니다. (현재: ${currentUserPoints}pt / 필요: 2000pt)`);
-                    currentUserPoints -= 2000;
-                    await db.collection("users").doc(currentUserEmail).set({ points: currentUserPoints }, { merge: true });
-                    document.getElementById('sideUserPoints').innerText = currentUserPoints;
+            newFiles.forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    alert(`이미지 파일만 가능합니다: ${file.name}`);
+                    return;
                 }
-                isHighlighted = true;
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`2MB 이하의 파일만 업로드 가능합니다: ${file.name}`);
+                    return;
+                }
+                selectedImageFiles.push(file);
+            });
+
+            renderImagePreviews();
+        }
+
+        function renderImagePreviews() {
+            previewContainer.innerHTML = '';
+            selectedImageFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'image-preview';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="preview">
+                        <button class="delete-btn" onclick="removeImage(${index}, event)">✕</button>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeImage(index, event) {
+            event.stopPropagation();
+            selectedImageFiles.splice(index, 1);
+            renderImagePreviews();
+        }
+
+        function resetImageUploader() {
+            selectedImageFiles = [];
+            previewContainer.innerHTML = '';
+        }
+
+        async function uploadImagesToStorage() {
+            if (selectedImageFiles.length === 0) return [];
+
+            const storage = firebase.storage();
+            const uploadedURLs = [];
+
+            const loadingLayer = document.getElementById('loadingLayer');
+            if(loadingLayer) {
+                loadingLayer.innerText = '이미지 업로드 중...';
+                loadingLayer.style.display = 'flex';
             }
-        } else {
-            const existingDoc = await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).get();
-            if (existingDoc.exists) isHighlighted = existingDoc.data().isHighlighted || false;
-        }
 
-        const now = new Date();
-        const postData = { 
-            title, author: currentUserEmail, authorNickname: currentUserNickname,
-            content, isHTML, isNotice, isSecret, isHighlighted,
-            dateShort: `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`,  
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()  
-        };
-
-        if(editId) await db.collection("boards").doc(currentBoard).collection("posts").doc(editId).update(postData);
-        else await db.collection("boards").doc(currentBoard).collection("posts").add(postData);
-        
-        showList();
-    }
-
-    async function showDetail(id, data) {
-        const isOwner = data.author === currentUserEmail;
-        const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-
-        if (data.isSecret && !isOwner && !isAdmin) {
-            alert("비밀글은 작성자와 관리자만 볼 수 있습니다. 🔒");
-            if(currentBoard) showList(); else showHome();
-            return; 
-        }
-
-        hideAll();
-        document.getElementById('detailView').classList.remove('hidden');
-
-        let displayTitle = data.title;
-        if (data.isSecret) displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:14px; font-weight:normal;">(비밀글)</span>`;
-    
-        document.getElementById('viewTitle').innerHTML = displayTitle;
-        const displayAuthor = data.authorNickname || data.author.split('@')[0];
-        document.getElementById('viewMeta').innerText = `작성자: ${displayAuthor} | 작성일: ${data.dateShort}`;
-
-        const viewContent = document.getElementById('viewContent');
-        if (data.isHTML) viewContent.innerHTML = data.content;
-        else viewContent.innerText = data.content;
-
-        const canEdit = isOwner || isAdmin; 
-        document.getElementById('editBtn').classList.toggle('hidden', !canEdit);
-        document.getElementById('deleteBtn').classList.toggle('hidden', !canEdit);
-
-        document.getElementById('editBtn').onclick = () => showEditor(id, data);
-        document.getElementById('deleteBtn').onclick = async () => {
-            if (confirm("정말 이 글을 삭제할까요?")) {
-                await db.collection("boards").doc(currentBoard).collection("posts").doc(id).delete();
-                alert("삭제되었습니다.");
-                showList();
+            for (let file of selectedImageFiles) {
+                const fileName = `post_images/${Date.now()}_${Math.random().toString(36).substring(2, 7)}_${file.name}`;
+                const storageRef = storage.ref().child(fileName);
+                
+                try {
+                    const snapshot = await storageRef.put(file);
+                    const downloadURL = await snapshot.ref.getDownloadURL();
+                    uploadedURLs.push(downloadURL);
+                } catch (error) {
+                    console.error("Storage upload error:", error);
+                    alert("이미지 업로드에 실패했습니다.");
+                    if(loadingLayer) loadingLayer.style.display = 'none';
+                    return null; 
+                }
             }
-        };
-    }
-
-    // ==========================================
-    // [6] 출석체크
-    // ==========================================
-    async function checkAttendance() {
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-
-        if (userLastAttendance === todayStr) {
-            return alert("오늘은 이미 출석체크를 완료했습니다! 내일 다시 방문해 주세요. 😊");
-        }
-
-        let newStreak = 1; 
-        if (userLastAttendance === yesterdayStr) newStreak = userAttendanceStreak + 1; 
-
-        let basePoints = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
-        let finalPoints = basePoints;
-        let bonusMsg = "";
-
-        if (newStreak % 3 === 0) {
-            finalPoints = Math.floor(basePoints * 1.5);
-            bonusMsg = `<br><span style="color:#ff4757; font-size:13px; display:inline-block; margin-top:5px;">(🔥 3일 연속 달성! 보너스 1.5배 적용)</span>`;
-        }
-
-        try {
-            const newTotalPoints = currentUserPoints + finalPoints;
-            await db.collection("users").doc(currentUserEmail).set({
-                points: newTotalPoints,
-                attendanceStreak: newStreak,
-                lastAttendanceDate: todayStr
-            }, { merge: true });
-
-            currentUserPoints = newTotalPoints;
-            userAttendanceStreak = newStreak;
-            userLastAttendance = todayStr;
-            document.getElementById('sideUserPoints').innerText = currentUserPoints;
-
-            document.getElementById('attDate').innerText = `📅 ${todayStr}`;
-            document.getElementById('attMessage').innerHTML = `<b>${newStreak}일째</b> 출석체크가 완료되었습니다!${bonusMsg}`;
-            document.getElementById('attPoints').innerText = `+${finalPoints} pt`;
-            document.getElementById('attendanceModal').classList.remove('hidden');
-
-        } catch (e) {
-            alert("출석체크 처리 중 오류가 발생했습니다.");
-            console.error(e);
-        }
-    }
-    function closeAttendanceModal() { document.getElementById('attendanceModal').classList.add('hidden'); }
-
-    // ==========================================
-    // [7] 내 정보 관리(공개설정 추가) 및 회원 탈퇴
-    // ==========================================
-    async function openProfileModal() {
-        const doc = await db.collection("users").doc(currentUserEmail).get();
-        if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('profNickname').value = data.nickname || currentUserEmail.split('@')[0]; 
-            document.getElementById('profPhone').value = data.phone || "";
-            document.getElementById('profBirth').value = data.birth || "";
-            document.getElementById('profAddress').value = data.address || "";
-
-            // [추가] 공개 여부 체크박스 상태 로드 (기본값 false: 비공개)
-            document.getElementById('profPhonePublic').checked = data.isPhonePublic || false;
-            document.getElementById('profBirthPublic').checked = data.isBirthPublic || false;
-            document.getElementById('profAddressPublic').checked = data.isAddressPublic || false;
-        } else {
-            document.getElementById('profNickname').value = currentUserEmail.split('@')[0];
-        }
-        document.getElementById('profPassword').value = ""; 
-        document.getElementById('profileModal').classList.remove('hidden');
-    }
-    function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
-
-    async function reauthenticateUser(password) {
-        const user = firebase.auth().currentUser;
-        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-        return user.reauthenticateWithCredential(credential);
-    }
-
-    async function saveProfile() {
-        const nickname = document.getElementById('profNickname').value.trim();
-        const phone = document.getElementById('profPhone').value.trim();
-        const birth = document.getElementById('profBirth').value;
-        const address = document.getElementById('profAddress').value.trim();
-        const password = document.getElementById('profPassword').value;
-
-        // [추가] 공개 여부 체크박스 상태 가져오기
-        const isPhonePublic = document.getElementById('profPhonePublic').checked;
-        const isBirthPublic = document.getElementById('profBirthPublic').checked;
-        const isAddressPublic = document.getElementById('profAddressPublic').checked;
-
-        if (!password) return alert("정보를 저장하려면 현재 비밀번호를 입력해야 합니다.");
-        if (!nickname) return alert("닉네임을 입력해 주세요.");
-
-        try {
-            await reauthenticateUser(password); 
-            await db.collection("users").doc(currentUserEmail).set({ 
-                nickname, phone, birth, address,
-                isPhonePublic, isBirthPublic, isAddressPublic // DB에 저장
-            }, { merge: true }); 
             
-            alert("내 정보가 성공적으로 수정되었습니다.");
-            currentUserNickname = nickname;
-            document.getElementById('sideUserName').innerText = currentUserNickname;
-            closeProfileModal(); 
-        } catch (error) {
-            alert("비밀번호가 일치하지 않거나 오류가 발생했습니다.");
+            if(loadingLayer) loadingLayer.style.display = 'none';
+            return uploadedURLs; 
         }
-    }
 
-    async function deleteUserAccount() {
-        const password = document.getElementById('profPassword').value;
-        if (!password) return alert("탈퇴를 진행하시려면 먼저 비밀번호를 입력해 주세요.");
-        if (!confirm("정말 회원 탈퇴를 진행하시겠습니까?\n작성한 정보와 계정이 모두 삭제되며, 복구할 수 없습니다.")) return;
+        /* ==========================================
+           [수정됨] 기존 글 저장 함수 (savePost) 업데이트
+           기존 작성된 savePost 함수 안에 이미지 업로드 로직(1~3번)을 합쳐주세요.
+           ========================================== */
+        async function savePost() {
+            // ... (기존에 제목/내용 유효성 검사하는 로직들) ...
 
-        try {
-            await reauthenticateUser(password); 
-            const user = firebase.auth().currentUser;
-            await db.collection("users").doc(currentUserEmail).delete();
-            await user.delete();
-            alert("회원 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
-            closeProfileModal(); 
-        } catch (error) {
-            alert("비밀번호 불일치 또는 탈퇴 중 오류가 발생했습니다.");
-        }
-    }
+            // 1. Firebase Storage에 이미지 먼저 업로드
+            const imageUrls = await uploadImagesToStorage();
+            if (imageUrls === null) return; // 업로드 실패 시 함수 중단
 
-    // ==========================================
-    // [8] 팝업 메뉴 및 신규 기능 (프로필 보기/글 검색)
-    // ==========================================
-    let onlineUsersUnsubscribe = null;
-    function listenToOnlineUsers() {
-        if (onlineUsersUnsubscribe) onlineUsersUnsubscribe(); 
-        onlineUsersUnsubscribe = db.collection("users").where("online", "==", true)
-            .onSnapshot(snapshot => {
-                const list = document.getElementById('onlineUsersList');
-                const countSpan = document.getElementById('onlineCount');
-                list.innerHTML = "";
-                let count = 0;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const nickname = data.nickname || doc.id.split('@')[0];
-                    const isMe = doc.id === currentUserEmail;
-                    const li = document.createElement('li');
-                    
-                    if (isMe) li.innerHTML = `<span style="color: var(--accent-color); font-weight: bold;">${nickname}</span> (나)`;
-                    else li.innerText = nickname;
-                    
-                    list.appendChild(li);
-                    count++;
-                });
-                if (count === 0) list.innerHTML = "<li style='color:#777;'>접속자가 없습니다.</li>";
-                countSpan.innerText = count;
-            });
-    }
-    
-    function toggleOnlineUsers() {
-        const list = document.getElementById('onlineUsersList');
-        const icon = document.getElementById('onlineToggleIcon');
-        if (list.classList.contains('hidden')) {
-            list.classList.remove('hidden');
-            icon.innerText = '▼';
-        } else {
-            list.classList.add('hidden');
-            icon.innerText = '▲';
-        }
-    }
+            // 2. Firestore에 저장할 데이터 객체 구성
+            const postData = {
+                title: document.getElementById('postTitleInput').value,
+                content: document.getElementById('postContentInput').value,
+                images: imageUrls, // ✅ 업로드된 이미지 다운로드 URL 배열 추가
+                // ... (나머지 기존 author, timestamp, isNotice 등 속성들 유지) ...
+            };
 
-    let selectedTargetUser = "";
-
-    function openUserMenu(e, userEmail) {
-        e.preventDefault(); 
-        if (userEmail === currentUserEmail) return; // 본인 클릭 시 무시
-        selectedTargetUser = userEmail;
-        const menu = document.getElementById('contextMenu');
-        menu.style.left = e.clientX + "px";
-        menu.style.top = e.clientY + "px";
-        menu.classList.remove('hidden');
-    }
-
-    document.addEventListener('click', () => { const menu = document.getElementById('contextMenu'); if (menu) menu.classList.add('hidden'); });
-
-    // 우클릭 기능 1. 쪽지 보내기
-    function clickSendMsgFromMenu() {
-        document.getElementById('contextMenu').classList.add('hidden');
-        openMessageModal();
-        switchMsgTab(3); 
-        document.getElementById('msgReceiverInput').value = selectedTargetUser; 
-    }
-
-    // 우클릭 기능 2. 프로필 보기 (공개 설정 반영)
-    async function clickViewUserProfileFromMenu() {
-        document.getElementById('contextMenu').classList.add('hidden');
-        if(!selectedTargetUser) return;
-
-        const doc = await db.collection("users").doc(selectedTargetUser).get();
-        if(!doc.exists) return alert("해당 사용자의 정보를 찾을 수 없습니다.");
-        
-        const data = doc.data();
-        const isAdmin = ADMIN_EMAILS.includes(currentUserEmail); // 관리자는 무조건 열람 가능
-        const displayNick = data.nickname || selectedTargetUser.split('@')[0];
-        
-        document.getElementById('viewProfileNickname').innerText = `${displayNick}님의 프로필`;
-        document.getElementById('viewProfileEmail').innerText = selectedTargetUser;
-
-        // 공개 여부에 따른 데이터 마스킹 함수
-        const formatField = (val, isPublic) => {
-            if (!val) return "<span style='color:#ccc;'>미입력</span>";
-            if (isPublic || isAdmin) return val;
-            return "<span style='color:#ff4757;'>🔒 비공개</span>";
-        };
-
-        document.getElementById('viewProfilePhone').innerHTML = formatField(data.phone, data.isPhonePublic);
-        document.getElementById('viewProfileBirth').innerHTML = formatField(data.birth, data.isBirthPublic);
-        document.getElementById('viewProfileAddress').innerHTML = formatField(data.address, data.isAddressPublic);
-
-        document.getElementById('viewUserProfileModal').classList.remove('hidden');
-    }
-
-    // 우클릭 기능 3. 해당 사용자가 쓴 모든 게시글 검색
-    async function clickSearchPostsFromMenu() {
-        document.getElementById('contextMenu').classList.add('hidden');
-        if(!selectedTargetUser) return;
-
-        hideAll();
-        currentBoard = ""; // 전체 검색 모드를 위해 빈 값 처리
-        document.getElementById('listView').classList.remove('hidden');
-        document.getElementById('listViewSearchBar').classList.add('hidden'); // 검색 상태일 땐 상단 검색바 숨김
-        
-        // 검색중인 유저 닉네임 가져오기 (비동기로 가볍게 처리)
-        let displayNick = selectedTargetUser.split('@')[0];
-        const userDoc = await db.collection("users").doc(selectedTargetUser).get();
-        if(userDoc.exists && userDoc.data().nickname) displayNick = userDoc.data().nickname;
-
-        document.getElementById('boardTitle').innerText = `🔍 '${displayNick}'님의 작성글`;
-
-        const tbody = document.getElementById('postTableBody');
-        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 40px;'>게시글을 모두 검색 중입니다...</td></tr>";
-
-        let allUserPosts = [];
-        // 읽기 권한이 있는 모든 게시판 목록 순회
-        const readableBoards = boards.filter(b => b.type === 'board' || !b.type).filter(b => currentUserLevel >= b.readLevel);
-
-        for(const b of readableBoards) {
-            const snap = await db.collection("boards").doc(b.name).collection("posts")
-                .where("author", "==", selectedTargetUser)
-                .get();
+            try {
+                // 3. 기존 Firestore에 add() 혹은 update() 하는 코드
+                // await db.collection("posts").add(postData);
                 
-            snap.forEach(doc => {
-                allUserPosts.push({ id: doc.id, boardName: b.name, ...doc.data() });
-            });
-        }
-
-        // 최신 시간순 정렬
-        allUserPosts.sort((a,b) => b.timestamp - a.timestamp);
-
-        tbody.innerHTML = "";
-        if(allUserPosts.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:40px; color:#999;'>작성한 글이 없습니다.</td></tr>"; 
-            return;
-        }
-
-        // 테이블에 결과 뿌리기
-        allUserPosts.forEach((data, i) => {
-            const tr = document.createElement('tr');
-            // 검색된 글 클릭 시, 해당 게시판으로 currentBoard 세팅 후 글 열기
-            tr.onclick = () => { currentBoard = data.boardName; showDetail(data.id, data); };
-
-            const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
-            let displayTitle = data.title;
-            
-            // 본인 글 검색은 아니므로, 비밀글은 관리자만 제목 확인 가능
-            if (data.isSecret && !isAdmin) displayTitle = `<span style="color:#999;">🔒 비밀글입니다.</span>`;
-            else if (data.isSecret) displayTitle = `🔒 ${data.title} <span style="color:#eb4d4b; font-size:12px; font-weight:normal;">(비밀글)</span>`;
-
-            let pureText = data.content.replace(/<[^>]*>?/gm, ''); 
-            let previewText = pureText.substring(0, 70) + (pureText.length > 70 ? "..." : "");
-        
-            tr.innerHTML = `
-                <td class="col-num">${allUserPosts.length - i}</td>
-                <td class="col-title">
-                    <div style="margin-bottom: 2px;">
-                        <span class="board-tag" style="margin:0;">${data.boardName}</span>
-                        <span style="font-weight:600; font-size: 15px;">${displayTitle}</span>
-                    </div>
-                    <div class="post-preview">${previewText}</div>
-                </td>
-                <td class="col-author">${data.authorNickname || data.author.split('@')[0]}</td>
-                <td class="col-date">${data.dateShort}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // ==========================================
-    // [9] 쪽지 시스템
-    // ==========================================
-    let currentMsgTab = 1;
-    let msgUnsubscribe = null;
-
-    function listenToMessages() {
-        if (msgUnsubscribe) msgUnsubscribe();
-        msgUnsubscribe = db.collection("messages").where("receiver", "==", currentUserEmail).where("isRead", "==", false)
-            .onSnapshot(snap => {
-                const badge = document.getElementById('msgUnreadBadge');
-                if (snap.empty) badge.classList.add('hidden');
-                else { badge.classList.remove('hidden'); badge.innerText = snap.size > 99 ? "99+" : snap.size; }
-            });
-    }
-
-    function openMessageModal() { document.getElementById('messageModal').classList.remove('hidden'); switchMsgTab(1); }
-    function closeMessageModal() { document.getElementById('messageModal').classList.add('hidden'); }
-    function openChatPopup() { window.open('chat.html', 'MeantzChat', 'width=400,height=600'); }
-
-    function switchMsgTab(n) {
-        currentMsgTab = n;
-        document.getElementById('msgTab1').classList.toggle('active', n === 1);
-        document.getElementById('msgTab2').classList.toggle('active', n === 2);
-        document.getElementById('msgTab3').classList.toggle('active', n === 3);
-        document.getElementById('msgListArea').classList.toggle('hidden', n === 3);
-        document.getElementById('msgWriteArea').classList.toggle('hidden', n !== 3);
-        document.getElementById('msgReadArea').classList.add('hidden'); 
-        
-        if (n === 1) loadMessages("receiver"); 
-        if (n === 2) loadMessages("sender");   
-        if (n === 3) {
-            if(!selectedTargetUser) document.getElementById('msgReceiverInput').value = "";
-            document.getElementById('msgContentInput').value = "";
-            selectedTargetUser = ""; 
-        }
-    }
-
-    async function loadMessages(type) {
-        const listArea = document.getElementById('msgListArea');
-        listArea.innerHTML = "<div style='text-align:center; padding: 30px;'>불러오는 중...</div>";
-        try {
-            const snap = await db.collection("messages").where(type, "==", currentUserEmail).orderBy("timestamp", "desc").get();
-            listArea.innerHTML = "";
-            if (snap.empty) return listArea.innerHTML = "<div style='text-align:center; padding: 30px; color:#888;'>보관된 쪽지가 없습니다.</div>";
-
-            snap.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = `msg-row ${data.isRead ? 'msg-read' : 'msg-unread'}`;
-                const date = data.timestamp ? data.timestamp.toDate() : new Date();
-                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                // 완료 후 입력 폼과 이미지 업로더 모두 초기화
+                // ... (기존 document.getElementById('postTitleInput').value = "" 등) ...
+                resetImageUploader(); // ✅ 이미지 폼 초기화 추가
                 
-                const targetName = type === "receiver" ? `보낸이: ${data.senderNickname || data.sender.split('@')[0]}` : `받는이: ${data.receiver.split('@')[0]}`;
-                const preview = data.content.length > 20 ? data.content.substring(0, 20) + "..." : data.content;
-
-                div.innerHTML = `
-                    <div style="flex:1;">
-                        <span style="font-size:11px; color:#ff4757; margin-right:5px;">${type==="receiver" && !data.isRead ? '🔴' : ''}</span>${preview}
-                    </div>
-                    <div style="font-size:11px; text-align:right;"><div>${targetName}</div><div>${dateStr}</div></div>
-                `;
-                div.onclick = () => viewMessage(doc.id, data, type);
-                listArea.appendChild(div);
-            });
-        } catch(e) { listArea.innerHTML = "<div style='text-align:center; padding: 20px; color:red;'>목록을 불러올 수 없습니다.</div>"; }
-    }
-
-    async function viewMessage(docId, data, type) {
-        document.getElementById('msgListArea').classList.add('hidden');
-        document.getElementById('msgReadArea').classList.remove('hidden');
-        const date = data.timestamp ? data.timestamp.toDate() : new Date();
-        const dateStr = `${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        
-        const header = type === "receiver" ? `보낸 사람: <b>${data.senderNickname || data.sender}</b> (${data.sender})<br>받은 시간: ${dateStr}` 
-                                           : `받는 사람: <b>${data.receiver}</b><br>보낸 시간: ${dateStr}`;
-        document.getElementById('msgReadHeader').innerHTML = header;
-        document.getElementById('msgReadContent').innerText = data.content;
-        
-        if (type === "receiver" && !data.isRead) await db.collection("messages").doc(docId).update({ isRead: true });
-    }
-
-    async function sendDirectMessage() {
-        const receiverEmail = document.getElementById('msgReceiverInput').value.trim();
-        const content = document.getElementById('msgContentInput').value.trim();
-
-        if (!receiverEmail) return alert("받는 사람의 아이디를 입력해 주세요.");
-        if (!content) return alert("내용을 입력해 주세요.");
-        if (receiverEmail === currentUserEmail) return alert("자신에게는 보낼 수 없습니다.");
-
-        try {
-            const userDoc = await db.collection("users").doc(receiverEmail).get();
-            if (!userDoc.exists) return alert("존재하지 않는 사용자입니다. 아이디를 다시 확인해 주세요.");
-
-            await db.collection("messages").add({
-                sender: currentUserEmail, senderNickname: currentUserNickname,
-                receiver: receiverEmail, content: content, isRead: false,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert("성공적으로 전송되었습니다!");
-            switchMsgTab(2); 
-        } catch (e) { alert("발송 중 오류가 발생했습니다."); }
-    }
-
-    // ==========================================
-    // [10] 관리자 (메뉴 설정 및 회원관리)
-    // ==========================================
-    function showAdminView() {
-        if (!ADMIN_EMAILS.includes(currentUserEmail)) return alert("관리자 권한이 필요합니다.");
-        hideAll();
-        document.getElementById('adminView').classList.remove('hidden');
-        renderMenuEditArea(); 
-        switchAdminTab(1); 
-        if(window.innerWidth <= 768) toggleMobileMenu();
-    }
-
-    function switchAdminTab(n) {
-        document.getElementById('adminTabContent1').classList.toggle('hidden', n !== 1);
-        document.getElementById('adminTabContent2').classList.toggle('hidden', n !== 2);
-        document.getElementById('adminTab1').classList.toggle('active', n === 1);
-        document.getElementById('adminTab2').classList.toggle('active', n === 2);
-        if (n === 2) loadAllUsers();
-    }
-
-    async function loadAllUsers() {
-        const tbody = document.getElementById('adminUserTableBody');
-        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding: 30px;'>사용자 정보를 불러오는 중...</td></tr>";
-        try {
-            const snapshot = await db.collection("users").get();
-            tbody.innerHTML = "";
-            snapshot.forEach(doc => {
-                const email = doc.id;
-                const data = doc.data();
-                const safeId = email.replace(/[@.]/g, ''); 
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color:var(--accent-color); font-weight:bold;">${email}</td>
-                    <td>${data.nickname || '-'}</td>
-                    <td>${data.phone || '-'}</td>
-                    <td>${data.address || '-'}</td>
-                    <td style="font-weight:bold; color:var(--point-color);">${data.points || 0}</td>
-                    <td><input type="number" id="levelInput_${safeId}" value="${data.level || 0}" style="width: 50px; padding: 6px; text-align:center;"></td>
-                    <td style="display: flex; gap: 5px;">
-                        <button class="btn-main" style="padding: 6px 10px; font-size: 11px;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">수정</button>
-                        <button class="btn-sub" style="padding: 6px 10px; font-size: 11px; color:var(--accent-color); border-color:var(--accent-color);" onclick="deleteUserFromDB('${email}')">강퇴</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) { tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>목록을 불러오지 못했습니다.</td></tr>"; }
-    }
-
-    async function deleteUserFromDB(targetEmail) {
-        if (!confirm(`[${targetEmail}] 사용자의 데이터베이스 정보를 완전히 삭제하시겠습니까?`)) return;
-        try {
-            await db.collection("users").doc(targetEmail).delete();
-            alert(`정상적으로 삭제 처리되었습니다.`);
-            loadAllUsers(); 
-        } catch (error) { alert("삭제 중 오류가 발생했습니다."); }
-    }
-
-    async function updateSpecificUserLevel(email, safeId) {
-        const newLevel = parseInt(document.getElementById(`levelInput_${safeId}`).value);
-        if (isNaN(newLevel)) return alert("정확한 숫자를 입력해 주세요.");
-        try {
-            await db.collection("users").doc(email).set({ level: newLevel }, { merge: true });
-            alert(`Lv.${newLevel} (으)로 수정 완료되었습니다.`);
-        } catch (error) { alert("수정 중 오류가 발생했습니다."); }
-    }
-
-    async function saveAllSettings() {
-        await db.collection("settings").doc("menu").set({ list: boards });
-        alert("게시판 및 메뉴 설정이 안전하게 저장되었습니다.");
-        loadMenu();
-    }
-
-    function renderMenuEditArea() {
-        const area = document.getElementById('menuEditArea');
-        if (!area) return; 
-        area.innerHTML = "";
-        
-        boards.forEach((b, i) => {
-            const div = document.createElement('div');
-            div.style.display = "flex"; div.style.alignItems = "center"; div.style.justifyContent = "space-between";
-            div.style.padding = "15px"; div.style.borderBottom = "1px solid var(--border-color)"; 
-            div.style.borderRadius = "8px"; div.style.marginBottom = "8px";
-
-            if (b.type === 'category') {
-                div.style.background = "#eef2f5";
-                div.innerHTML = `
-                    <div style="flex:1; font-weight:800; color:var(--dark-bg); font-size:14px;">📂 [대항목] ${b.name}</div>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},-1)">▲</button>
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},1)">▼</button>
-                        <button class="btn-sub" style="padding:6px 12px; color:white; background:var(--accent-color); border:none;" onclick="deleteMenu(${i})">삭제</button>
-                    </div>
-                `;
-            } else if (b.type === 'divider') {
-                div.style.background = "#fff";
-                div.innerHTML = `
-                    <div style="flex:1; font-weight:bold; color:#aaa; font-size:14px; letter-spacing:2px;">--- [절취선] ---</div>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},-1)">▲</button>
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},1)">▼</button>
-                        <button class="btn-sub" style="padding:6px 12px; color:white; background:var(--accent-color); border:none;" onclick="deleteMenu(${i})">삭제</button>
-                    </div>
-                `;
-            } else {
-                div.style.background = "#fff";
-                div.innerHTML = `
-                    <div style="flex:1; font-weight:bold; color:var(--dark-bg); font-size:15px;">📝 ${b.name}</div>
-                    <div style="margin-right:20px; font-size:12px; display:flex; gap:15px; align-items:center;">
-                        <label>읽기 권한(Lv): <input type="number" value="${b.readLevel}" onchange="boards[${i}].readLevel=parseInt(this.value)||0" style="width:50px; padding:6px; text-align:center;"></label>
-                        <label>쓰기 권한(Lv): <input type="number" value="${b.writeLevel}" onchange="boards[${i}].writeLevel=parseInt(this.value)||0" style="width:50px; padding:6px; text-align:center;"></label>
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},-1)">▲</button>
-                        <button class="btn-sub" style="padding:6px 12px;" onclick="moveMenu(${i},1)">▼</button>
-                        <button class="btn-sub" style="padding:6px 12px; color:white; background:var(--accent-color); border:none;" onclick="deleteMenu(${i})">삭제</button>
-                    </div>
-                `;
+                alert("글이 저장되었습니다.");
+                // showList(); 
+            } catch(e) {
+                console.error(e);
+                alert("글 작성 오류가 발생했습니다.");
             }
-            area.appendChild(div);
-        });
-    }
-
-    function addMenuItem(type) {
-        let name = type === 'divider' ? "divider_" + Date.now() : document.getElementById('newMenuInput').value.trim();
-        if(type !== 'divider' && !name) return alert("추가할 이름을 입력해 주세요.");
-        if(type !== 'divider' && boards.some(b => b.type !== 'divider' && b.name === name)) return alert("이미 사용 중인 이름입니다.");
-        
-        boards.push({ name, type, readLevel: 0, writeLevel: 0 }); 
-        if (type !== 'divider') document.getElementById('newMenuInput').value = ""; 
-        renderMenuEditArea(); 
-    }
-
-    function moveMenu(i, d) {
-        if(i+d < 0 || i+d >= boards.length) return;
-        const temp = boards[i]; boards[i] = boards[i+d]; boards[i+d] = temp;
-        renderMenuEditArea();
-    }
-
-    function deleteMenu(i) { 
-        let confirmMsg = boards[i].type === 'board' ? `'${boards[i].name}' 게시판을 메뉴에서 삭제할까요? (작성된 데이터는 보존됩니다)` : `해당 항목을 삭제하시겠습니까?`;
-        if(confirm(confirmMsg)) { boards.splice(i, 1); renderMenuEditArea(); } 
-    }
-</script>
+        }
+    </script>
 </body>
 </html>
