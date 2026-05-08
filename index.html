@@ -7,14 +7,169 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <style>
-        /* 1 ~ 9번 스타일 기존 코드 유지 */
-        /* ... (기존 CSS 코드들) ... */
+        /* ========================================== */
+        /* 1. 기본 설정 및 색상 변수 */
+        /* ========================================== */
+        :root {
+            --sidebar-width: 250px;
+            --dark-bg: #1e272e;
+            --sidebar-bg: #2f3640;
+            --accent-color: #ff4757;
+            --point-color: #ffa502;
+            --bg-color: #f1f2f6;
+            --card-bg: #ffffff;
+            --text-main: #2f3542;
+            --text-sub: #747d8c;
+            --border-color: #dfe4ea;
+        }
+
+        body { font-family: 'Pretendard', -apple-system, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none !important; }
+        button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
+        * { box-sizing: border-box; }
 
         /* ========================================== */
-        /* 10. 이미지 업로드 드래그 앤 드롭 스타일 [추가됨] */
+        /* 2. 레이아웃 및 팝업 (오버레이) */
+        /* ========================================== */
+        #loadingLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: flex; justify-content: center; align-items: center; color: white; z-index: 9999; font-size: 1.2rem; font-weight: bold; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        #mainApp { display: none; min-height: 100vh; align-items: stretch; }
+
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: var(--dark-bg); color: white; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .menu-toggle-btn { background: none; border: none; color: white; font-size: 24px; padding: 0; }
+        #mobileOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; }
+
+        /* ========================================== */
+        /* 3. 로그인 폼 */
+        /* ========================================== */
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 15px; width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .login-card h2 { margin-top: 0; color: var(--dark-bg); font-weight: 800; }
+        .login-card input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; }
+        .login-card button { width: 100%; padding: 14px; background: var(--dark-bg); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; transition: 0.2s; }
+        .login-card button:hover { background: #333; }
+
+        /* ========================================== */
+        /* 4. 사이드바 (내비게이션) */
+        /* ========================================== */
+        nav { width: var(--sidebar-width); flex-shrink: 0; background: var(--sidebar-bg); color: #ccc; display: flex; flex-direction: column; z-index: 1001; transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        nav h3 { padding: 25px 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+        
+        .profile-area { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
+        .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .profile-name { font-size: 14px; color: #fff; font-weight: 500; }
+        .profile-name b { color: var(--accent-color); font-weight: 800; }
+        
+        .badge { position:absolute; top:-4px; right:-6px; background:var(--accent-color); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; text-align:center; line-height:16px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid var(--dark-bg); }
+        
+        nav ul { list-style: none; padding: 10px 0; flex-grow: 1; margin: 0; }
+        nav ul li { padding: 14px 25px; transition: 0.2s; font-size: 14px; font-weight: 500; color: #ced6e0; border-left: 4px solid transparent; }
+        nav ul li:hover { background: rgba(255,255,255,0.05); color: white; }
+        nav ul li.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--accent-color); }
+        
+        .menu-category { padding: 12px 20px; font-size: 13px; color: #fff; font-weight: 800; background: rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .menu-category:hover { background: rgba(0,0,0,0.5); }
+        .menu-divider { border: none; border-top: 1px dashed rgba(255,255,255,0.25); margin: 6px 20px; height: 0; }
+        nav ul li.sub-board { padding-left: 35px; font-size: 13.5px; }
+        .nav-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: var(--dark-bg); }
+
+        /* ========================================== */
+        /* 5. 메인 홈 화면 */
+        /* ========================================== */
+        .home-banner { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 35px 40px; margin-bottom: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(118, 75, 162, 0.2); display: flex; align-items: center; justify-content: space-between; }
+        .home-banner h1 { margin: 0 0 10px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+        .home-banner p { margin: 0; font-size: 15px; opacity: 0.9; line-height: 1.5; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .banner-icon { font-size: 75px; opacity: 0.9; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2)); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .home-grid table { width: 100%; table-layout: fixed; }
+        
+        /* ========================================== */
+        /* 6. 메인 컨텐츠 및 게시판 테이블 */
+        /* ========================================== */
+        main { flex: 1; padding: 50px 30px; display: flex; justify-content: center; background: var(--bg-color); }
+        .content-wrapper { width: 100%; max-width: 950px; }
+        .board-header { margin-bottom: 20px; border-bottom: 2px solid var(--dark-bg); padding-bottom: 10px; }
+        .board-header h2 { margin: 0; color: var(--dark-bg); font-weight: 800; }
+        .card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-color); margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th { background: #f8f9fa; font-size: 0.85rem; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
+        tbody tr { transition: background 0.1s; }
+        tbody tr:hover { background: #fcfcfc; }
+        
+        .col-num { width: 60px; text-align: center; color: var(--text-sub); font-size: 13px; }
+        .col-author { width: 120px; font-size: 13px; color: #555; }
+        .col-date { width: 110px; text-align: center; font-size: 12px; color: var(--text-sub); }
+        .col-title { padding: 12px !important; vertical-align: middle; }
+        
+        .post-preview { display: block; font-size: 12px; color: #a4b0be; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+        .board-tag { font-size: 10px; padding: 3px 6px; background: #f1f2f6; border-radius: 4px; margin-right: 6px; color: var(--text-sub); font-weight: bold; border: 1px solid #eccc; }
+        
+        .notice-row { background-color: #fff4f4 !important; }
+        .notice-badge { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; font-weight: bold; }
+        .new-badge { background: var(--point-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; font-weight: bold; }
+        .highlight-title { color: #ff4757 !important; font-weight: 900 !important; text-decoration: underline; text-underline-position: under; text-shadow: 0px 2px 8px rgba(255, 71, 87, 0.2); }
+
+        /* ========================================== */
+        /* 7. 폼 요소 및 버튼 */
+        /* ========================================== */
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: var(--dark-bg); outline: none; }
+        
+        .search-bar { display: flex; gap: 8px; margin-top: 20px; align-items: center; flex-wrap: nowrap; }
+        .search-bar input { flex: 1; min-width: 100px; margin: 0; }
+        .search-bar button { white-space: nowrap; flex-shrink: 0; }
+        
+        .btn-main { background: var(--dark-bg); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
+        .btn-main:hover { background: #333; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-sub { background: white; color: var(--text-main); padding: 10px 18px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 500; transition: 0.2s; }
+        .btn-sub:hover { background: #f8f9fa; border-color: #ccc; }
+        
+        .setting-label-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; }
+        .setting-label-row label.title { font-size: 12px; font-weight: bold; }
+        .setting-label-row label.toggle { font-size: 11px; color: var(--text-sub); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .setting-label-row input[type="checkbox"] { width: 14px; height: 14px; margin: 0; cursor: pointer; }
+
+        /* ========================================== */
+        /* 8. 모달창 및 쪽지 시스템 */
+        /* ========================================== */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        
+        .tab-container { margin-bottom:15px; border-bottom: 2px solid var(--border-color); display: flex; gap: 5px; }
+        .tab-btn { padding: 10px 15px; border: none; background: transparent; font-weight: 600; color: var(--text-sub); border-bottom: 3px solid transparent; margin-bottom: -2px; }
+        .tab-btn.active { color: var(--dark-bg); border-bottom-color: var(--dark-bg); }
+        .tab-btn:hover:not(.active) { color: var(--text-main); }
+
+        #contextMenu { position: fixed; background: white; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 5000; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 500; min-width: 140px; }
+        .context-item { padding: 12px 18px; cursor: pointer; transition: background 0.1s; }
+        .context-item:hover { background: #f1f2f6; color: var(--accent-color); }
+        
+        .msg-row { border-bottom: 1px solid #f1f2f6; padding: 15px 10px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; transition: 0.2s; border-radius: 6px; }
+        .msg-row:hover { background-color: #f8f9fa; transform: translateX(2px); }
+        .msg-unread { font-weight: bold; color: var(--text-main); }
+        .msg-read { color: var(--text-sub); }       
+
+        /* ========================================== */
+        /* 9. 반응형 미디어 쿼리 (모바일) */
+        /* ========================================== */
+        @media screen and (max-width: 768px) {
+            nav { position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; transform: translateX(-100%); }
+            nav.open { transform: translateX(0); }
+            main { padding: 80px 15px 20px 15px; }
+            .card { padding: 20px; }
+            .col-author, .col-date { display: none; }
+            .home-grid { grid-template-columns: 1fr; } 
+            .home-banner { padding: 30px 20px; flex-direction: column; text-align: center; }
+            .banner-icon { display: none; }
+        }
+
+        /* ========================================== */
+        /* 10. 이미지 업로드 드래그 앤 드롭 스타일 (추가됨) */
         /* ========================================== */
         .image-upload-wrapper { margin-top: 15px; margin-bottom: 20px; }
         .image-upload-wrapper label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
@@ -29,36 +184,153 @@
     </style>
 </head>
 <body>
-    
-    <div id="editorView" class="hidden">
-        <div class="board-header"><h2 id="editorTitleText">글 작성</h2></div>
-        <div class="card">
-            <input type="hidden" id="editId">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                </div>
-            
-            <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="font-size: 16px; font-weight: bold; margin-bottom:15px;">
-            <textarea id="postContentInput" placeholder="자유롭게 이야기를 남겨주세요." style="height:400px; resize: vertical; line-height: 1.6;"></textarea>
 
-            <div class="image-upload-wrapper">
-                <label>📸 사진 첨부 (최대 10장, 장당 최대 2MB)</label>
-                <div id="image-dropzone" class="dropzone">
-                    여기를 클릭하거나 이미지를 드래그 앤 드롭 하세요.
-                    <input type="file" id="image-input" multiple accept="image/*" style="display: none;">
-                </div>
-                <div id="image-preview-container" class="preview-container"></div>
-            </div>
-            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                </div>
+    <div id="contextMenu" class="hidden">
+        <div class="context-item" onclick="clickSendMsgFromMenu()">✉️ 쪽지 보내기</div>
+        <div class="context-item" onclick="clickViewUserProfileFromMenu()">👤 프로필 보기</div>
+        <div class="context-item" onclick="clickSearchPostsFromMenu()">📝 작성글 검색</div>
+    </div>
+   
+    <div id="loadingLayer">서버와 연결 중입니다...</div>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>Meantz 놀이터</h2>
+            <p style="font-size: 13px; color: #888; margin-bottom: 20px;">반갑습니다! 접속 정보를 입력해 주세요.</p>
+            <input type="email" id="loginEmail" placeholder="아이디(이메일)">
+            <input type="password" id="loginPw" placeholder="비밀번호">        
+            <button onclick="handleLogin()" style="margin-bottom: 10px;">로그인</button>
+            <button onclick="handleSignup()" class="btn-sub" style="width: 100%; padding: 14px; border: 1px solid #ccc; background: #fff; color: #333; font-weight: bold;">간편 회원가입</button>
+            <p id="loginError" style="color:var(--accent-color); font-size:13px; margin-top:15px; font-weight:bold;"></p>
         </div>
     </div>
 
+    <div class="mobile-header" id="mobileHeader">
+        <button class="menu-toggle-btn" onclick="toggleMobileMenu()">☰</button>
+        <span style="font-weight: 800; margin-left: 15px; font-size: 18px;">Meantz 놀이터</span>
+    </div>
+    <div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+    <div id="mainApp">
+        <nav id="sidebar">
+            <h3 onclick="toggleMobileMenu()" class="pointer">MY BOARD</h3>
+            <div class="profile-area">
+                <div class="profile-header">
+                    <div class="profile-name"><b id="sideUserName"></b>님, 환영합니다!</div>
+                    <div style="cursor: pointer; position: relative;" onclick="openMessageModal()">
+                        <span style="font-size: 18px;">✉️</span>
+                        <span id="msgUnreadBadge" class="hidden badge"></span>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 12px; line-height: 1.6;">
+                    <div>회원 등급: <b style="color: #fff;">Lv.<span id="sideUserLevel">0</span></b></div>
+                    <div>보유 포인트: <b style="color: var(--point-color);"><span id="sideUserPoints">0</span> pt</b></div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button style="flex: 1; padding: 8px; font-size: 12px; background: var(--accent-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="checkAttendance()">✅ 출석체크</button>
+                    <button style="flex: 1; padding: 8px; font-size: 12px; background: #4b6584; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="openProfileModal()">정보 수정</button>
+                </div>
+            </div>      
+            <ul id="menuList"></ul>
+            <div class="nav-footer">
+                <div style="font-size: 12px; color: #a4b0be; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; max-height: 150px; overflow-y: auto;">
+                    <div onclick="toggleOnlineUsers()" style="cursor: pointer; color: #fff; margin-bottom: 8px; font-weight: bold; position: sticky; top: 0; background: #2f3640; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                        <span>🟢 현재 접속자 (<span id="onlineCount">0</span>명)</span>
+                        <span id="onlineToggleIcon" style="font-size: 10px; color: #a4b0be;">▼</span>
+                    </div>
+                    <ul id="onlineUsersList" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.8;">
+                        <li>로딩 중...</li>
+                    </ul>
+                </div>
+                <button style="width: 100%; padding: 10px; background: white; color: var(--dark-bg); border: none; border-radius: 6px; font-weight: bold; margin-bottom: 8px; cursor: pointer;" onclick="openChatPopup()">💬 실시간 채팅</button>
+                <button id="adminMenuBtn" class="hidden" style="width: 100%; padding: 10px; background: transparent; color: #fff; border: 1px solid #747d8c; border-radius: 6px; font-weight: bold; margin-bottom: 8px; cursor: pointer;" onclick="showAdminView()">⚙️ 사이트 관리</button>
+                <button style="width: 100%; padding: 10px; background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="handleLogout()">로그아웃</button>
+            </div>
+        </nav>
+
+        <main>
+            <div class="content-wrapper">
+                <div id="homeView" class="hidden">
+                    <div class="home-banner">
+                        <div>
+                            <h1>환영합니다, Meantz 놀이터입니다!</h1>
+                            <p>다양한 사람들과 자유롭게 소통하고 즐거운 시간을 보내세요.<br>오늘도 행운이 가득한 하루 되시길 바랍니다! ✨</p>
+                        </div>
+                        <div class="banner-icon">🚀</div>
+                    </div>
+                    <div class="home-grid">
+                        <div class="card" style="padding:0; overflow:hidden;">
+                            <div style="background: #fff4f4; padding: 15px 20px; font-weight: 800; color: var(--accent-color); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 16px;">📌</span> 공지사항
+                            </div>
+                            <table style="margin:0;"><tbody id="homeNoticeTableBody"></tbody></table>
+                        </div>
+                        <div class="card" style="padding:0; overflow:hidden;">
+                            <div style="background: #f8f9fa; padding: 15px 20px; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 16px;">📝</span> 통합 최신 게시글
+                            </div>
+                            <table style="margin:0;"><tbody id="homeRecentTableBody"></tbody></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="listView">
+                    <div class="board-header"><h2 id="boardTitle">게시판</h2></div>
+                    <div class="card" style="padding:0">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-num">번호</th>
+                                    <th class="col-title">제목</th>
+                                    <th class="col-author">작성자</th>
+                                    <th class="col-date">작성일</th>
+                                </tr>
+                            </thead>
+                            <tbody id="postTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="search-bar" id="listViewSearchBar">
+                        <input type="text" id="searchInput" placeholder="제목 또는 내용을 검색해 보세요...">
+                        <button class="btn-sub" onclick="searchPosts()">검색</button>
+                        <button id="writeBtn" class="btn-main" onclick="showEditor()">글쓰기</button>
+                    </div>
+                </div>
+
+                <div id="editorView" class="hidden">
+                    <div class="board-header"><h2 id="editorTitleText">글 작성</h2></div>
+                    <div class="card">
+                        <input type="hidden" id="editId">
+                        <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="font-size: 16px; font-weight: bold; margin-bottom:15px;">
+                        <textarea id="postContentInput" placeholder="자유롭게 이야기를 남겨주세요." style="height:400px; resize: vertical; line-height: 1.6;"></textarea>
+                        
+                        <div class="image-upload-wrapper">
+                            <label>📸 사진 첨부 (최대 10장, 장당 최대 2MB)</label>
+                            <div id="image-dropzone" class="dropzone">
+                                여기를 클릭하거나 이미지를 드래그 앤 드롭 하세요.
+                                <input type="file" id="image-input" multiple accept="image/*" style="display: none;">
+                            </div>
+                            <div id="image-preview-container" class="preview-container"></div>
+                        </div>
+
+                        <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                            <button class="btn-sub" onclick="cancelEdit()">취소</button>
+                            <button class="btn-main" onclick="savePost()">저장</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
     <script>
-        // Firestore 설정, 로그인, 메뉴 렌더링 등 기존 자바스크립트 유지
-        // ... (기존 자바스크립트 코드들) ...
+        // 기존 작성하셨던 설정 및 기본 변수들 (보존을 위해 선언)
+        // const firebaseConfig = { ... }; 
+        // firebase.initializeApp(firebaseConfig);
+        // const db = firebase.firestore();
 
         /* ==========================================
-           [추가됨] 이미지 업로드 관리 및 Storage 연동 로직
+           [추가됨] 1. 이미지 업로드 관리 (최대 10장, 2MB)
            ========================================== */
         let selectedImageFiles = []; 
         const MAX_IMAGES = 10;
@@ -68,6 +340,7 @@
         const imageInput = document.getElementById('image-input');
         const previewContainer = document.getElementById('image-preview-container');
 
+        // 드래그 앤 드롭 이벤트 리스너
         if(dropzone) {
             dropzone.addEventListener('click', () => imageInput.click());
             dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
@@ -86,14 +359,13 @@
             });
         }
 
+        // 용량 및 확장자, 개수 제한 체크
         function handleImageFiles(files) {
             const newFiles = Array.from(files);
-            
             if (selectedImageFiles.length + newFiles.length > MAX_IMAGES) {
                 alert(`이미지는 최대 ${MAX_IMAGES}장까지만 업로드 가능합니다.`);
                 return;
             }
-
             newFiles.forEach(file => {
                 if (!file.type.startsWith('image/')) {
                     alert(`이미지 파일만 가능합니다: ${file.name}`);
@@ -105,7 +377,6 @@
                 }
                 selectedImageFiles.push(file);
             });
-
             renderImagePreviews();
         }
 
@@ -137,13 +408,15 @@
             previewContainer.innerHTML = '';
         }
 
+        // Firebase Storage 업로드 로직
         async function uploadImagesToStorage() {
             if (selectedImageFiles.length === 0) return [];
-
+            
+            // 주의: firebaseConfig가 상단에 선언되어 있어야 작동합니다.
             const storage = firebase.storage();
             const uploadedURLs = [];
-
             const loadingLayer = document.getElementById('loadingLayer');
+            
             if(loadingLayer) {
                 loadingLayer.innerText = '이미지 업로드 중...';
                 loadingLayer.style.display = 'flex';
@@ -152,7 +425,6 @@
             for (let file of selectedImageFiles) {
                 const fileName = `post_images/${Date.now()}_${Math.random().toString(36).substring(2, 7)}_${file.name}`;
                 const storageRef = storage.ref().child(fileName);
-                
                 try {
                     const snapshot = await storageRef.put(file);
                     const downloadURL = await snapshot.ref.getDownloadURL();
@@ -170,38 +442,56 @@
         }
 
         /* ==========================================
-           [수정됨] 기존 글 저장 함수 (savePost) 업데이트
-           기존 작성된 savePost 함수 안에 이미지 업로드 로직(1~3번)을 합쳐주세요.
+           [수정됨] 2. 글 저장 (savePost) 연동
            ========================================== */
         async function savePost() {
-            // ... (기존에 제목/내용 유효성 검사하는 로직들) ...
+            const title = document.getElementById('postTitleInput').value.trim();
+            const content = document.getElementById('postContentInput').value.trim();
+            
+            if (!title || !content) {
+                alert("제목과 내용을 모두 입력해주세요.");
+                return;
+            }
 
-            // 1. Firebase Storage에 이미지 먼저 업로드
+            // 1. 이미지가 있다면 Storage에 먼저 업로드
             const imageUrls = await uploadImagesToStorage();
-            if (imageUrls === null) return; // 업로드 실패 시 함수 중단
+            if (imageUrls === null) return; // 업로드 중 에러 발생 시 중단
 
-            // 2. Firestore에 저장할 데이터 객체 구성
+            // 2. 글 데이터 구조
             const postData = {
-                title: document.getElementById('postTitleInput').value,
-                content: document.getElementById('postContentInput').value,
-                images: imageUrls, // ✅ 업로드된 이미지 다운로드 URL 배열 추가
-                // ... (나머지 기존 author, timestamp, isNotice 등 속성들 유지) ...
+                title: title,
+                content: content,
+                images: imageUrls, // 🚀 생성된 URL 배열 저장
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                // 필요 시 author, authorUid 등의 정보를 여기에 추가하세요.
             };
 
             try {
-                // 3. 기존 Firestore에 add() 혹은 update() 하는 코드
-                // await db.collection("posts").add(postData);
+                // 3. Firestore 게시판 컬렉션에 추가
+                // (현재 선택된 게시판 ID가 curBoardId 라는 가정하에 예시 작성)
+                // await db.collection("boards").doc(curBoardId).collection("posts").add(postData);
                 
-                // 완료 후 입력 폼과 이미지 업로더 모두 초기화
-                // ... (기존 document.getElementById('postTitleInput').value = "" 등) ...
-                resetImageUploader(); // ✅ 이미지 폼 초기화 추가
+                // 업로드 후 초기화 작업
+                document.getElementById('postTitleInput').value = "";
+                document.getElementById('postContentInput').value = "";
+                resetImageUploader();
                 
-                alert("글이 저장되었습니다.");
-                // showList(); 
-            } catch(e) {
-                console.error(e);
-                alert("글 작성 오류가 발생했습니다.");
+                alert("성공적으로 저장되었습니다.");
+                // 글 목록 뷰로 돌아가는 함수 실행 (예: showList())
+                document.getElementById('editorView').classList.add('hidden');
+                document.getElementById('listView').classList.remove('hidden');
+
+            } catch (e) {
+                console.error("Save Post Error: ", e);
+                alert("글 저장 중 오류가 발생했습니다.");
             }
+        }
+        
+        // 여기에 기존에 작성하셨던 메뉴 관리(moveMenu 등), 게시판 렌더링 함수들을 이어서 배치해주시면 됩니다.
+        function moveMenu(i, d) {
+            if(i+d < 0 || i+d >= boards.length) return;
+            const temp = boards[i]; boards[i] = boards[i+d]; boards[i+d] = temp;
+            renderMenuEditArea();
         }
     </script>
 </body>
