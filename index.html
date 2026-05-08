@@ -169,6 +169,17 @@
             .home-banner { padding: 30px 20px; flex-direction: column; text-align: center; }
             .banner-icon { display: none; }
         }
+
+        /* ========================================== */
+        /* 이미지 업로드 영역 스타일 */
+        /* ========================================== */
+        .upload-zone { border: 2px dashed var(--border-color); background-color: #fafbfc; border-radius: 8px; padding: 30px 20px; text-align: center; color: var(--text-sub); cursor: pointer; margin-bottom: 10px; transition: background 0.2s, border-color 0.2s; }
+        .upload-zone:hover, .upload-zone.dragover { background-color: #f1f2f6; border-color: var(--dark-bg); }
+        .preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .image-preview { position: relative; width: 80px; height: 80px; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; line-height: 20px; text-align: center; cursor: pointer; padding: 0; transition: background 0.2s; }
+        .remove-btn:hover { background: var(--accent-color); }
     </style>
 </head>
 <body>
@@ -325,6 +336,13 @@
                             </div>
                         </div>
                         <input type="text" id="postTitleInput" placeholder="제목을 입력하세요" style="font-size: 16px; font-weight: bold; margin-bottom:15px;">
+
+                        <div id="imageUploadZone" class="upload-zone">
+                            <p style="margin: 0; font-size: 14px;">📸 이곳을 클릭하거나 이미지를 드래그 앤 드롭하세요.<br><span style="font-size: 12px; color: #a4b0be;">(최대 10개, 각 2MB 이하)</span></p>
+                            <input type="file" id="imageInput" multiple accept="image/*" style="display: none;">
+                        </div>
+                        <div id="imagePreviewContainer" class="preview-container"></div>
+                        
                         <textarea id="postContentInput" placeholder="자유롭게 이야기를 남겨주세요." style="height:400px; resize: vertical; line-height: 1.6;"></textarea>
                         <div style="text-align: right; margin-top:20px;">
                             <button class="btn-sub" style="margin-right: 5px;" onclick="showList()">작성 취소</button>
@@ -862,6 +880,8 @@
             `;
             tbody.appendChild(tr);
         });
+
+        uploadedImages = []; renderPreviews();
     }
     
     function searchPosts() { showList(document.getElementById('searchInput').value.trim()); }
@@ -1530,6 +1550,95 @@
         let confirmMsg = boards[i].type === 'board' ? `'${boards[i].name}' 게시판을 메뉴에서 삭제할까요? (작성된 데이터는 보존됩니다)` : `해당 항목을 삭제하시겠습니까?`;
         if(confirm(confirmMsg)) { boards.splice(i, 1); renderMenuEditArea(); } 
     }
+
+    // ==========================================
+    // 이미지 업로드 처리 로직
+    // ==========================================
+    const MAX_IMAGES = 10;
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    let uploadedImages = []; // 선택된 파일들을 저장할 배열
+
+    const uploadZone = document.getElementById('imageUploadZone');
+    const imageInput = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+
+    // 1. 클릭 시 파일 선택 창 열기
+    uploadZone.addEventListener('click', () => imageInput.click());
+    
+    // 2. 드래그 앤 드롭 이벤트 처리
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // 3. 파일 선택기에서 파일 선택 시 처리
+    imageInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        imageInput.value = ''; // 동일한 파일을 다시 선택할 수 있도록 초기화
+    });
+
+    // 4. 파일 검증 및 배열 추가 로직
+    function handleFiles(files) {
+        const fileArray = Array.from(files);
+    
+        // 이미지 파일만 필터링
+        const validFiles = fileArray.filter(file => file.type.startsWith('image/'));
+        if (validFiles.length !== fileArray.length) {
+            alert("이미지 파일만 업로드할 수 있습니다.");
+        }
+
+        validFiles.forEach(file => {
+            // 개수 제한 체크
+            if (uploadedImages.length >= MAX_IMAGES) {
+                alert(`이미지는 최대 ${MAX_IMAGES}개까지만 업로드할 수 있습니다.`);
+                return;
+            }
+
+            // 용량 제한 체크 (2MB)
+            if (file.size > MAX_SIZE) {
+                alert(`"${file.name}" 파일은 2MB를 초과하여 추가할 수 없습니다.`);
+                return;
+            }
+
+            uploadedImages.push(file);
+        });
+
+        renderPreviews();
+    }
+
+    // 5. 화면에 썸네일 미리보기 렌더링
+    function renderPreviews() {
+        previewContainer.innerHTML = ''; // 초기화
+    
+        uploadedImages.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="preview">
+                    <button class="remove-btn" onclick="removeImage(${index}, event)">✕</button>
+                `;
+                previewContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 6. 개별 이미지 삭제 함수 (전역 함수로 등록)
+    window.removeImage = function(index, event) {
+        event.stopPropagation(); // 클릭 이벤트가 부모 요소로 전파되는 것 방지
+        uploadedImages.splice(index, 1);
+        renderPreviews();
+    };
 </script>
 </body>
 </html>
