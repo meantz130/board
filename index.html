@@ -653,6 +653,7 @@
         if (doc.exists) {
             boards = doc.data().list.map(b => ({
                 name: b.name,
+                originalName: b.name, // 변경 전 이름을 기억하기 위해 추가
                 type: b.type || 'board',
                 readLevel: b.readLevel !== undefined ? b.readLevel : (b.level || 0),
                 writeLevel: b.writeLevel !== undefined ? b.writeLevel : (b.level || 0)
@@ -1475,9 +1476,48 @@
     }
 
     async function saveAllSettings() {
-        await db.collection("settings").doc("menu").set({ list: boards });
-        alert("게시판 및 메뉴 설정이 안전하게 저장되었습니다.");
-        loadMenu();
+        // 로딩 화면 표시 (게시글 이동에 시간이 걸릴 수 있으므로)
+        const loadingLayer = document.getElementById('loadingLayer');
+        loadingLayer.innerText = "설정 저장 및 데이터 이동 중...";
+        loadingLayer.style.display = 'flex';
+
+        try {
+            // 1. 게시판 이름이 변경되었는지 확인하고 기존 게시글을 새 게시판으로 복사 후 삭제
+            for (let b of boards) {
+                // 게시판이고, 원래 이름이 존재하며, 이름이 변경된 경우에만 실행
+                if (b.type === 'board' && b.originalName && b.originalName !== b.name) {
+                    const oldRef = db.collection("boards").doc(b.originalName).collection("posts");
+                    const newRef = db.collection("boards").doc(b.name).collection("posts");
+
+                    const snapshot = await oldRef.get();
+
+                    for (let doc of snapshot.docs) {
+                        const postData = doc.data();
+                        await newRef.doc(doc.id).set(postData); // 새 경로에 글 쓰기
+                        await oldRef.doc(doc.id).delete();     // 기존 경로 글 삭제
+                    }
+                    b.originalName = b.name; // 이동 완료 후 업데이트
+                }
+            }
+
+            // 2. DB에 저장할 때는 originalName 등 불필요한 데이터를 제외하고 깔끔하게 저장
+            const saveList = boards.map(b => ({
+                name: b.name,
+                type: b.type,
+                readLevel: b.readLevel,
+                writeLevel: b.writeLevel
+            }));
+
+            await db.collection("settings").doc("menu").set({ list: saveList });
+            alert("게시판 및 메뉴 설정이 안전하게 저장되었습니다.");
+            loadMenu();
+        } catch (error) {
+            console.error(error);
+            alert("저장 중 오류가 발생했습니다.");
+        } finally {
+            loadingLayer.style.display = 'none';
+            loadingLayer.innerText = "서버와 연결 중입니다..."; // 텍스트 원상복구
+        }
     }
 
     function renderMenuEditArea() {
