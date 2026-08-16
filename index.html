@@ -751,8 +751,11 @@
             snap.forEach(doc => {
                 const data = doc.data();
                 const postData = { id: doc.id, boardName: b.name, ...data };
+                // [수정된 부분] 
+                // 1. 게시판 이름이 '공지사항'이거나, 관리자가 '상단 고정(isNotice)'을 체크한 글을 공지사항으로 분류
                 if (b.name === '공지사항' || data.isNotice === true) {
                     noticePosts.push(postData);
+                }
                 else {
                     recentPosts.push(postData);
                 }
