@@ -751,8 +751,11 @@
             snap.forEach(doc => {
                 const data = doc.data();
                 const postData = { id: doc.id, boardName: b.name, ...data };
-                if (b.name === '공지사항') noticePosts.push(postData);
-                else recentPosts.push(postData);
+                if (b.name === '공지사항' || data.isNotice === true) {
+                    noticePosts.push(postData);
+                else {
+                    recentPosts.push(postData);
+                }
             });
         }
 
