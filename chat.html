@@ -1,203 +1,18 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meantz 실시간 채팅</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        /* ========================================== */
-        /* 1. 기본 레이아웃 및 전체 UI */
-        /* ========================================== */
-        :root {
-            --primary-bg: #e5eaf5;
-            --header-bg: #ffffff;
-            --text-dark: #2c3e50;
-            --mine-bg: #ffeaa7; 
-            --others-bg: #ffffff;
-            --accent-color: #ff4757;
-        }
-
-        body { 
-            font-family: 'Pretendard', -apple-system, sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            background: var(--primary-bg); 
-            overflow: hidden; 
-        }
-
-        .hidden { display: none !important; }
-
-        header { 
-            background: var(--header-bg); 
-            padding: 15px; 
-            text-align: center; 
-            font-weight: 800; 
-            color: var(--text-dark);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            z-index: 10;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
-
-        /* ========================================== */
-        /* 2. 접속자 정보 바 (토글 영역) */
-        /* ========================================== */
-        #presenceBar { 
-            background: rgba(255, 255, 255, 0.9); 
-            padding: 10px 15px; 
-            font-size: 12px; 
-            color: #555; 
-            font-weight: 600;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            backdrop-filter: blur(5px);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 5;
-        }
-        
-        .user-count { color: var(--accent-color); font-weight: bold; }
-        
-        #onlineUsersWrapper {
-            background: #fff;
-            max-height: 150px;
-            overflow-y: auto;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            z-index: 4;
-        }
-        #onlineUsersList { list-style: none; padding: 0; margin: 0; font-size: 12px; }
-        #onlineUsersList li { padding: 8px 15px; border-bottom: 1px solid #f1f2f6; cursor: context-menu; }
-        #onlineUsersList li:hover { background: #f8f9fa; }
-
-        /* ========================================== */
-        /* 3. 채팅창 내부 (메시지 영역) */
-        /* ========================================== */
-        #chatBox { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-        }
-
-        .msg-container { display: flex; flex-direction: column; max-width: 75%; position: relative; }
-        .msg-container.mine { align-self: flex-end; align-items: flex-end; }
-        .msg-container.others { align-self: flex-start; align-items: flex-start; }
-        
-        .sender-name { font-size: 12px; color: #576574; margin-bottom: 5px; font-weight: bold; padding: 0 2px; cursor: context-menu; }
-        .sender-name:hover { text-decoration: underline; }
-
-        .msg { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; word-break: break-all; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .msg.mine { background: var(--mine-bg); color: #2d3436; border-top-right-radius: 2px; }
-        .msg.others { background: var(--others-bg); color: #2d3436; border-top-left-radius: 2px; border: 1px solid rgba(0,0,0,0.03); }
-        .msg-time { font-size: 10px; color: #a4b0be; margin-top: 4px; padding: 0 2px; }
-
-        /* ========================================== */
-        /* 4. 입력 폼 영역 */
-        /* ========================================== */
-        .input-area { padding: 12px 15px; background: var(--header-bg); display: flex; gap: 10px; box-shadow: 0 -2px 15px rgba(0,0,0,0.05); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-        input[type="text"] { flex: 1; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 20px; outline: none; font-size: 14px; background: #f8f9fa; transition: 0.2s; }
-        input[type="text"]:focus { border-color: #74b9ff; background: #fff; }
-        button.send-btn { padding: 0 20px; background: #0984e3; color: #fff; border: none; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        button.send-btn:hover { background: #074e87; }
-
-        /* ========================================== */
-        /* 5. 우클릭 메뉴 & 모달창 */
-        /* ========================================== */
-        #contextMenu { position: absolute; background: white; border: 1px solid #dfe4ea; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 5000; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 500; min-width: 140px; }
-        .context-item { padding: 12px 18px; cursor: pointer; transition: background 0.1s; }
-        .context-item:hover { background: #f1f2f6; color: #0984e3; }
-        .context-item.danger { color: var(--accent-color); border-top: 1px solid #eee; }
-        .context-item.danger:hover { background: #fff4f4; }
-
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 6000; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
-        .modal-content h3 { margin-top: 0; border-bottom: 2px solid #1e272e; padding-bottom: 10px; font-size: 16px; }
-        
-        .modal-btn { width: 100%; padding: 12px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; font-size: 13px; }
-        .btn-black { background: #1e272e; color: white; }
-        .btn-gray { background: #f1f2f6; color: #555; }
-        textarea.msg-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 100px; resize: none; font-size: 13px; box-sizing: border-box; }
-    </style>
-</head>
-<body>
-    <header>💬 실시간 소통방</header>
-    
-    <!-- 접속자 표시 바 (클릭 시 토글) -->
-    <div id="presenceBar" onclick="toggleOnlineUsers()">
-        <span>🟢 현재 접속 <span id="onlineCount" class="user-count">0</span>명</span>
-        <span id="onlineToggleIcon">▼</span>
-    </div>
-    <div id="onlineUsersWrapper" class="hidden">
-        <ul id="onlineUsersList"></ul>
-    </div>
-    
-    <div id="chatBox"></div>
-    
-    <div class="input-area">
-        <input type="text" id="chatInput" placeholder="따뜻한 메시지를 남겨보세요." onkeyup="if(window.event.keyCode==13) sendChat()" inputmode="text">
-        <button class="send-btn" onclick="sendChat()">전송</button>
-    </div>
-
-    <!-- 우클릭 컨텍스트 메뉴 -->
-    <div id="contextMenu" class="hidden">
-        <div class="context-item" onclick="openProfileModal()">👤 프로필 확인</div>
-        <div class="context-item" onclick="openMessageModal()">✉️ 쪽지 보내기</div>
-        <div id="kickMenuBtn" class="context-item danger hidden" onclick="kickUser()">🚫 강퇴하기</div>
-    </div>
-
-    <!-- 1. 프로필 확인 모달 -->
-    <div id="profileModal" class="modal hidden">
-        <div class="modal-content">
-            <h3 id="profModalTitle">프로필</h3>
-            <div style="font-size: 13px; line-height: 2.2; color: #333; margin-top: 15px;">
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:#888;">이메일</b> <span id="profModalEmail"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:#888;">연락처</b> <span id="profModalPhone"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:#888;">생년월일</b> <span id="profModalBirth"></span>
-                </div>
-                <div style="display:flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                    <b style="color:#888;">거주지</b> <span id="profModalAddress"></span>
-                </div>
-            </div>
-            <button class="modal-btn btn-black" style="margin-top: 25px;" onclick="document.getElementById('profileModal').classList.add('hidden')">닫기</button>
-        </div>
-    </div>
-
-    <!-- 2. 쪽지 보내기 모달 -->
-    <div id="messageModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>✉️ 쪽지 보내기</h3>
-            <p id="msgTargetName" style="font-size: 13px; color: #555; margin-bottom: 10px;"></p>
-            <textarea id="directMsgInput" class="msg-input" placeholder="전달할 내용을 작성해 주세요."></textarea>
-            <div style="display: flex; gap: 8px;">
-                <button class="modal-btn btn-gray" onclick="document.getElementById('messageModal').classList.add('hidden')">취소</button>
-                <button class="modal-btn btn-black" onclick="sendDirectMessage()">보내기</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // [1] Firebase 초기화 및 전역 변수
-        // ==========================================
-        const ADMIN_EMAILS = ["오민택@aa.bb"]; 
-
-        const firebaseConfig = {
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meantz · 카페 채팅</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+:root{color-scheme:light;--mint:#28765b;--ink:#243a30;--line:#dce7df;--muted:#819188}*{box-sizing:border-box}body{margin:0;font-family:Pretendard,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#edf2ee;color:var(--ink);height:100dvh;overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}.hidden{display:none!important}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #86c9a7;outline-offset:2px}header{height:85px;background:#16271f;color:#fff;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:15px}header small{display:block;font-size:9px;color:#9cc2ad;letter-spacing:2px}h1{font-size:20px;margin:5px 0 0;font-weight:700;letter-spacing:-.5px}.header-actions{display:flex;align-items:center;gap:12px}#connectionStatus{font-size:11px;color:#acd1bb}.quiet-button{border:1px solid #ffffff30;background:transparent;color:#d1e7d9;border-radius:7px;padding:7px 10px;font-size:11px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 224px;height:calc(100dvh - 85px)}.conversation{display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}.room-note{font-size:11px;color:#708575;background:#f8fbf8;border-bottom:1px solid var(--line);padding:13px 23px;display:flex;justify-content:space-between;gap:10px}.room-note b{color:#4d795e;font-weight:500}#chatBox{flex:1;overflow-y:auto;padding:24px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#bed1c3 transparent}.session-note{text-align:center;margin:5px auto 25px;max-width:400px;color:#8a9b8e;font-size:11px;line-height:1.9}.session-note span{background:#e2ebe5;border-radius:20px;padding:6px 13px}.empty{display:grid;place-content:center;text-align:center;min-height:200px;color:#85998a;line-height:1.9;font-size:13px}.empty strong{font-size:28px;color:#8ba998;font-weight:400;margin-bottom:12px}.msg-container{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:18px;animation:arrive .18s ease}.msg-container.mine{align-items:flex-end}.sender-name{border:0;padding:0;margin:0 0 6px;background:transparent;color:#6b8171;font-size:11px;display:flex;align-items:center;gap:5px}.sender-name small{font-size:9px;color:#90a196}.msg{padding:11px 14px;max-width:min(82%,560px);border:1px solid #e0e9e2;border-radius:2px 13px 13px 13px;background:white;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}.mine .msg{background:#d6eddf;border-color:#c5e2cf;border-radius:13px 2px 13px 13px}.msg-time{font-size:9px;color:#8ea094;margin-top:5px}.day-label{text-align:center;color:#96a69a;font-size:10px;margin:18px 0}.composer{background:#fff;border-top:1px solid var(--line);padding:15px 20px 12px}.compose-row{display:flex;gap:10px;align-items:flex-end}#chatInput{resize:none;min-height:46px;max-height:140px;flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;background:#f9fbf9;padding:12px;font-size:13px;line-height:1.5}.primary{background:#2a6e51;border:0;color:white;padding:13px 19px;border-radius:8px;font-size:12px}.compose-foot{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:10px;color:#8a9a90}#chatFeedback{color:#88644a;font-size:11px;margin:0 0 7px}#newMessages{position:absolute;bottom:130px;align-self:center;border:1px solid #bed9c7;background:#e1f2e7;color:#376d4a;border-radius:20px;padding:9px 15px;box-shadow:0 3px 16px #284c2920;font-size:11px}.participants{background:#f9fbf9;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:23px 17px}.participants h2{font-size:13px;margin:0;display:flex;justify-content:space-between;align-items:center}.count{font-size:11px;color:#397751;background:#e2f0e7;border-radius:10px;padding:3px 8px}.participants>p{color:#8c9b90;font-size:10px;margin:9px 0 18px;line-height:1.8}#onlineUsersList{list-style:none;padding:0;margin:0;overflow-y:auto;flex:1;scrollbar-width:thin}.user-row{display:flex;gap:8px;align-items:center;width:100%;border:0;background:transparent;text-align:left;padding:11px 2px;color:#3b5645;border-bottom:1px solid #edf1ed}.avatar{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#e8f0e9;color:#6e947a;flex-shrink:0;font-size:14px}.user-copy{min-width:0;flex:1}.user-copy strong{font-size:12px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.user-copy small{font-size:9px;color:#8b9d8e;display:block;margin-top:3px}.online-dot{height:5px;width:5px;border-radius:50%;background:#6cab82;flex-shrink:0}.people-note{font-size:10px;color:#94a496;line-height:1.8;padding-top:18px}.nick-icon{width:17px;height:17px;vertical-align:middle}.status-panel{position:fixed;inset:0;background:#edf2ee;z-index:100;display:grid;place-content:center;text-align:center;padding:30px}.status-panel h2{font-size:23px}.status-panel p{font-size:13px;color:#75897b;line-height:1.9}.status-panel a{color:#28765b}#contextMenu{position:fixed;z-index:50;min-width:160px;padding:6px;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 40px #193e2920}.context-item{display:block;width:100%;padding:10px 12px;text-align:left;background:transparent;border:0;color:#49604e;border-radius:6px;font-size:12px}.context-item:hover{background:#edf5ee}.danger{color:#a25858}.modal{position:fixed;inset:0;background:#132b2066;backdrop-filter:blur(4px);z-index:60;display:grid;place-items:center;padding:20px}.modal-content{width:min(100%,380px);max-height:90dvh;overflow:auto;border:1px solid var(--line);background:#fff;border-radius:16px;padding:25px}.modal-content h3{font-size:18px;margin:0 0 18px}.profile-field{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid #edf2ed;padding:10px 0;font-size:12px;overflow-wrap:anywhere}.profile-field b{font-weight:500;color:#8a9b8d;flex-shrink:0}.modal-buttons{display:flex;gap:8px;margin-top:20px}.modal-buttons button{flex:1;padding:11px;border-radius:7px;border:1px solid var(--line)}.secondary{background:#f3f7f3;color:#67816c}.msg-input{width:100%;height:120px;resize:vertical;border:1px solid var(--line);border-radius:9px;padding:12px;font-size:13px}.nick-admin{font-size:9px;border-radius:4px;background:#e8f1ea;color:#67916f;padding:1px 4px}@keyframes arrive{from{opacity:.3;transform:translateY(3px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.msg-container{animation:none}}@media(max-width:600px){header{height:75px;padding:15px}h1{font-size:17px}.layout{height:calc(100dvh - 75px);grid-template-columns:minmax(0,1fr) 138px}.participants{padding:17px 9px}.avatar{width:24px;height:24px;border-radius:7px}.user-row{gap:5px}.user-copy strong{font-size:11px}.participants h2{font-size:11px}.room-note{padding:10px 12px;flex-direction:column;gap:3px}#chatBox{padding:18px 12px}.composer{padding:12px 10px}.compose-row{gap:6px}.primary{padding:13px 11px}.header-actions{gap:5px}.quiet-button{padding:6px;font-size:10px}#connectionStatus{font-size:10px}.compose-foot>span:first-child{display:none}.msg{max-width:95%}}@media(max-width:380px){.layout{grid-template-columns:minmax(0,1fr) 110px}.participants>p{font-size:9px}.avatar{display:none}.participants{padding:15px 7px}}
+</style></head><body>
+<header><div><small>MEANTZ · CAFE CHAT</small><h1>잠깐, 같이 얘기해요.</h1></div><div class="header-actions"><span id="connectionStatus" role="status">연결 중…</span><button class="quiet-button" onclick="widenChat()">넓게 보기</button></div></header>
+<div class="layout"><section class="conversation" aria-label="카페 대화"><div class="room-note"><span id="historyMode">채팅방에 들어가는 중이에요.</span><b id="myName"></b></div><div id="chatBox" tabindex="0" aria-label="대화 내용"></div><button id="newMessages" class="hidden" onclick="scrollToBottom()">새 대화 ↓</button><form id="chatForm" class="composer"><p id="chatFeedback" role="status" aria-live="polite"></p><div class="compose-row"><textarea id="chatInput" rows="1" maxlength="1000" placeholder="편하게 얘기해요." aria-label="채팅 메시지" disabled></textarea><button id="sendButton" type="submit" class="primary" disabled>보내기</button></div><div class="compose-foot"><span>Enter로 보내기 · Shift+Enter로 줄바꿈</span><span id="charCount">0 / 1,000</span></div></form></section><aside class="participants"><h2>함께 있는 사람 <span id="onlineCount" class="count">0</span></h2><p>지금 채팅방에 들어와 있는<br>회원들이에요.</p><ul id="onlineUsersList"></ul><div class="people-note">닉네임을 누르면<br>프로필과 쪽지를 볼 수 있어요.</div></aside></div>
+<div id="gate" class="status-panel"><h2 id="gateTitle">채팅방 문 여는 중…</h2><p id="gateText">잠깐만 기다려 주세요.</p><a href="index.html" target="_blank" rel="noopener">카페로 가기</a></div>
+<div id="contextMenu" class="hidden"><button class="context-item" onclick="openProfileModal()">프로필 보기</button><button class="context-item" onclick="openMessageModal()">쪽지 보내기</button><button id="kickMenuBtn" class="context-item danger hidden" onclick="kickUser()">채팅방에서 내보내기</button></div>
+<div id="profileModal" class="modal hidden"><div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="profModalTitle"><h3 id="profModalTitle">프로필</h3><div class="profile-field"><b>닉네임</b><span id="profModalNickname"></span></div><div class="profile-field"><b>연락처</b><span id="profModalPhone"></span></div><div class="profile-field"><b>생년월일</b><span id="profModalBirth"></span></div><div class="profile-field"><b>거주지</b><span id="profModalAddress"></span></div><div class="modal-buttons"><button class="secondary" onclick="closeModal('profileModal')">닫기</button></div></div></div>
+<div id="messageModal" class="modal hidden"><div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="dmTitle"><h3 id="dmTitle">따로 얘기할까요?</h3><p id="msgTargetName"></p><textarea id="directMsgInput" class="msg-input" maxlength="2000" placeholder="보낼 쪽지를 적어주세요."></textarea><div class="modal-buttons"><button class="secondary" onclick="closeModal('messageModal')">취소</button><button id="dmSendButton" class="primary" onclick="sendDirectMessage()">쪽지 보내기</button></div></div></div>
+<script>
+'use strict';
+const firebaseConfig={
             apiKey: "AIzaSyB8uG7VjV3cB12gaynB6AmTyjHcw0K9M-U",
             authDomain: "meantzboard.firebaseapp.com",
             projectId: "meantzboard",
@@ -205,277 +20,111 @@
             messagingSenderId: "807743275828",
             appId: "1:807743275828:web:2effa72896931a2df15b61"
         };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        
-        let userEmail = "";
-        let userNickname = ""; 
-        let entryTime = new Date(); 
-        let selectedTargetEmail = ""; // 우클릭한 타겟의 이메일 저장
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore(),auth=firebase.auth();
+let userEmail='',userNickname='',userLevel=0,userIcon='',entryTime=null,sessionRef=null,sessionId='',ready=false,sending=false,blocked=false,generation=0;
+let chatUnsub=null,presenceUnsub=null,selfUnsub=null,profileUnsub=null,heartbeatTimer=null,expiryTimer=null;
+let selectedTargetEmail='',selectedTargetName='',latestPresence=[],lastMemberKeys=new Set(),presenceLoaded=false;
+const stops=()=>[chatUnsub,presenceUnsub,selfUnsub,profileUnsub].forEach(fn=>{if(fn)fn();});
+const el=id=>document.getElementById(id);
+const isChatAdmin=level=>[8,9].includes(Number(level));
+const timestampMillis=value=>value?.toMillis?.()||0;
+const iconSymbols={leaf:'❧',star:'✦',moon:'☾',clover:'♣',heart:'♥',crown:'♛',coffee:'☕',music:'♫',flower:'✿',cat:'♟',sun:'☀',snow:'❄'};
+function makeIcon(id){if(!iconSymbols[id])return null;const span=document.createElement('span');span.className='nick-icon';span.textContent=iconSymbols[id];span.setAttribute('aria-hidden','true');return span;}
+function setStatus(text){el('connectionStatus').textContent=text;}
+function feedback(text){el('chatFeedback').textContent=text;}
+function gate(title,text){el('gateTitle').textContent=title;el('gateText').textContent=text;el('gate').classList.remove('hidden');}
+function cleanup(remove=true){ready=false;stops();chatUnsub=presenceUnsub=selfUnsub=profileUnsub=null;clearInterval(heartbeatTimer);clearInterval(expiryTimer);heartbeatTimer=expiryTimer=null;el('chatInput').disabled=el('sendButton').disabled=true;const old=sessionRef;sessionRef=null;if(remove&&old)old.delete().catch(()=>{});}
+function presenceData(){return {email:userEmail,nickname:userNickname,level:userLevel,icon:userIcon,sessionId,lastActive:firebase.firestore.FieldValue.serverTimestamp()};}
+async function heartbeat(){if(!sessionRef||blocked||!navigator.onLine)return;try{await sessionRef.update(presenceData());}catch(e){setStatus('접속 확인이 늦어지고 있어요');}}
+auth.onAuthStateChanged(async user=>{
+ const token=++generation;cleanup();blocked=false;presenceLoaded=false;lastMemberKeys=new Set();latestPresence=[];el('chatBox').replaceChildren();
+ if(!user){userEmail='';gate('카페 로그인이 필요해요.','카페에서 로그인한 뒤 채팅방을 다시 열어주세요.');return;}
+ userEmail=user.email;
+ try{
+  const profile=await db.collection('users').doc(userEmail).get({source:'server'});if(token!==generation)return;
+  const data=profile.exists?profile.data():{};userNickname=data.nickname||userEmail.split('@')[0];userLevel=Number(data.level)||0;userIcon=data.equippedIcon||'';
+  sessionId=crypto.randomUUID();const ref=db.collection('chat_presence').doc(sessionId);sessionRef=ref;
+  await ref.set({...presenceData(),joinedAt:firebase.firestore.FieldValue.serverTimestamp(),kicked:false});
+  const joined=await ref.get({source:'server'});if(token!==generation){ref.delete().catch(()=>{});return;}
+  entryTime=joined.data()?.joinedAt;if(!timestampMillis(entryTime))throw Error('입장 시간을 확인하지 못했어요.');
+  ready=true;el('gate').classList.add('hidden');el('chatInput').disabled=el('sendButton').disabled=false;el('myName').textContent=userNickname+' · Lv.'+userLevel;
+  selfUnsub=ref.onSnapshot(doc=>{if(token!==generation)return;if(doc.exists&&doc.data().kicked===true){blocked=true;cleanup();gate('이번 대화는 여기까지예요.','관리자가 채팅방에서 내보냈어요.');}},()=>feedback('접속 상태를 확인하지 못했어요. 새로고침해 주세요.'));
+  listenChat();listenPresence();
+  profileUnsub=db.collection('users').doc(userEmail).onSnapshot(doc=>{
+   if(token!==generation||!ready)return;
+   if(!doc.exists){blocked=true;cleanup();gate('회원 정보를 찾지 못했어요.','카페에서 다시 로그인해 주세요.');return;}
+   const data=doc.data(),oldAdmin=isChatAdmin(userLevel);userLevel=Number(data.level)||0;userNickname=data.nickname||userEmail.split('@')[0];userIcon=data.equippedIcon||'';el('myName').textContent=userNickname+' · Lv.'+userLevel;
+   if(oldAdmin!==isChatAdmin(userLevel))listenChat();heartbeat();
+  },()=>feedback('회원 정보 갱신을 확인하지 못했어요.'));
+  heartbeatTimer=setInterval(heartbeat,25000);expiryTimer=setInterval(renderPresence,10000);setStatus('실시간 연결 중');
+ }catch(e){if(token!==generation)return;cleanup();gate('채팅방을 열지 못했어요.','인터넷 연결과 Firebase 접근 권한을 확인한 뒤 새로고침해 주세요.');console.error(e);}
+});
+function buildChatQuery(){let q=db.collection('chats');if(!isChatAdmin(userLevel))q=q.where('timestamp','>=',entryTime);return q.orderBy('timestamp','asc');}
+function listenChat(){
+ if(chatUnsub)chatUnsub();el('chatBox').replaceChildren();
+ el('historyMode').textContent=isChatAdmin(userLevel)?'관리자 · 이전 대화부터 모두 볼 수 있어요.':'지금 들어온 뒤의 대화만 보여요.';
+ let first=true;const token=generation;
+ chatUnsub=buildChatQuery().onSnapshot({includeMetadataChanges:true},snapshot=>{
+  if(token!==generation||!ready)return;
+  const box=el('chatBox'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<100,oldTop=box.scrollTop;
+  const previousIds=new Set([...box.querySelectorAll('[data-message-id]')].map(n=>n.dataset.messageId));
+  const fragment=document.createDocumentFragment();const note=document.createElement('div');note.className='session-note';const badge=document.createElement('span');badge.textContent=isChatAdmin(userLevel)?'카페에 남긴 대화들':'지금부터 새로운 대화';note.append(badge);fragment.append(note);
+  let count=0,added=0,lastDate='';
+  snapshot.forEach(doc=>{
+   const d=doc.data({serverTimestamps:'estimate'}),time=timestampMillis(d.timestamp);
+   // Guard cached snapshots as well as the server-side range query.
+   if(!isChatAdmin(userLevel)&&time&&time<timestampMillis(entryTime))return;
+   if(!isChatAdmin(userLevel)&&!time&&d.sender!==userEmail)return;
+   if(!previousIds.has(doc.id))added++;
+   const date=time?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',dateStyle:'medium'}).format(new Date(time)):'';
+   if(date&&date!==lastDate){const day=document.createElement('div');day.className='day-label';day.textContent=date;fragment.append(day);lastDate=date;}
+   const mine=d.sender===userEmail,row=document.createElement('article');row.className='msg-container '+(mine?'mine':'others');row.dataset.messageId=doc.id;
+   const name=document.createElement('button');name.type='button';name.className='sender-name';const icon=makeIcon(d.icon||d.authorIcon);if(icon)name.append(icon);name.append(document.createTextNode((d.nickname||'회원')+(mine?' (나)':'')));
+   if(!mine){name.onclick=e=>openContextMenu(e,d.sender,d.nickname||'회원');name.oncontextmenu=e=>openContextMenu(e,d.sender,d.nickname||'회원');}
+   const message=document.createElement('div');message.className='msg';message.textContent=String(d.text||'');const stamp=document.createElement('div');stamp.className='msg-time';stamp.textContent=doc.metadata?.hasPendingWrites?'보내는 중…':time?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}).format(new Date(time)):'시간 확인 중';row.append(name,message,stamp);fragment.append(row);count++;
+  });
+  if(!count){const empty=document.createElement('div');empty.className='empty';const mark=document.createElement('strong');mark.textContent='☕';empty.append(mark,document.createTextNode('아직 조용하네요. 먼저 인사해 볼까요?'));fragment.append(empty);}
+  box.replaceChildren(fragment);
+  if(first||nearBottom){scrollToBottom();}else{box.scrollTop=oldTop;if(added)el('newMessages').classList.remove('hidden');}
+  first=false;setStatus(!navigator.onLine?'인터넷 연결을 기다려요':snapshot.metadata.fromCache?'새 대화 확인 중…':'● 실시간 연결됨');
+ },e=>{setStatus('대화를 불러오지 못했어요');feedback('연결 또는 chats 읽기 권한을 확인한 뒤 새로고침해 주세요.');console.error(e);});
+}
+function scrollToBottom(){const box=el('chatBox');box.scrollTop=box.scrollHeight;el('newMessages').classList.add('hidden');}
+function activeMembers(docs,now=Date.now()){
+ const grouped=new Map();for(const d of docs){const time=timestampMillis(d.lastActive);if(d.kicked||!d.email||!time||now-time>90000)continue;const old=grouped.get(d.email);if(!old||timestampMillis(old.lastActive)<time)grouped.set(d.email,d);}return [...grouped.values()].sort((a,b)=>(a.email===userEmail?-1:b.email===userEmail?1:(a.nickname||'').localeCompare(b.nickname||'','ko')));
+}
+function listenPresence(){if(presenceUnsub)presenceUnsub();const token=generation;presenceUnsub=db.collection('chat_presence').onSnapshot(snapshot=>{if(token!==generation)return;latestPresence=[];snapshot.forEach(doc=>latestPresence.push(doc.data({serverTimestamps:'estimate'})));renderPresence();presenceLoaded=true;},()=>feedback('참여자 목록을 불러오지 못했어요. chat_presence 권한을 확인해 주세요.'));}
+function renderPresence(){
+ const members=activeMembers(latestPresence),list=el('onlineUsersList');list.replaceChildren();
+ for(const data of members){const li=document.createElement('li'),button=document.createElement('button');button.className='user-row';const avatar=document.createElement('span');avatar.className='avatar';avatar.textContent=iconSymbols[data.icon]||(data.nickname||'회').slice(0,1);const copy=document.createElement('span');copy.className='user-copy';const name=document.createElement('strong');name.textContent=(data.nickname||'회원')+(data.email===userEmail?' (나)':'');const level=document.createElement('small');level.textContent=(isChatAdmin(data.level)?'관리자 · ':'')+'Lv.'+(Number(data.level)||0)+(presenceLoaded&&!lastMemberKeys.has(data.email)?' · 방금 참가':'');copy.append(name,level);const dot=document.createElement('span');dot.className='online-dot';button.append(avatar,copy,dot);if(data.email!==userEmail){button.onclick=e=>openContextMenu(e,data.email,data.nickname);button.oncontextmenu=e=>openContextMenu(e,data.email,data.nickname);}li.append(button);list.append(li);}
+ if(!members.length){const empty=document.createElement('li');empty.className='people-note';empty.textContent='참여자를 확인하고 있어요.';list.append(empty);}el('onlineCount').textContent=members.length;lastMemberKeys=new Set(members.map(m=>m.email));
+}
+async function sendChat(){
+ const input=el('chatInput'),msg=input.value.trim();if(!msg||sending||!ready||blocked)return;
+ if(!navigator.onLine){feedback('인터넷이 연결되면 다시 보내주세요. 적은 글은 그대로 둘게요.');return;}
+ if(msg.length>1000)return feedback('메시지는 1,000자까지 보낼 수 있어요.');
+ sending=true;el('sendButton').disabled=true;feedback('');const original=input.value;
+ try{await db.collection('chats').add({sender:userEmail,nickname:userNickname,icon:userIcon,text:msg,timestamp:firebase.firestore.FieldValue.serverTimestamp()});if(input.value===original)input.value='';updateCount();scrollToBottom();input.focus();}
+ catch(e){feedback('보내지 못했어요. 적은 글은 남겨뒀으니 다시 눌러주세요.');}
+ finally{sending=false;el('sendButton').disabled=!ready;}
+}
+function updateCount(){el('charCount').textContent=el('chatInput').value.length.toLocaleString()+' / 1,000';}
+el('chatForm').addEventListener('submit',e=>{e.preventDefault();sendChat();});
+el('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();sendChat();}});el('chatInput').addEventListener('input',updateCount);
+el('chatBox').addEventListener('scroll',()=>{const b=el('chatBox');if(b.scrollHeight-b.scrollTop-b.clientHeight<80)el('newMessages').classList.add('hidden');});
+function openContextMenu(e,email,name='회원'){e.preventDefault();if(!email)return;selectedTargetEmail=email;selectedTargetName=name;el('kickMenuBtn').classList.toggle('hidden',!isChatAdmin(userLevel));const menu=el('contextMenu');menu.classList.remove('hidden');menu.style.left=Math.max(8,Math.min(e.clientX||8,innerWidth-184))+'px';menu.style.top=Math.max(8,Math.min(e.clientY||80,innerHeight-150))+'px';e.stopPropagation();}
+document.addEventListener('click',()=>el('contextMenu').classList.add('hidden'));
+function closeModal(id){el(id).classList.add('hidden');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('profileModal');closeModal('messageModal');el('contextMenu').classList.add('hidden');}});
+async function openProfileModal(){el('contextMenu').classList.add('hidden');const target=selectedTargetEmail;if(!target)return;try{const doc=await db.collection('users').doc(target).get();if(!doc.exists)return feedback('회원 정보를 찾지 못했어요.');const d=doc.data();el('profModalTitle').textContent=(d.nickname||'회원')+'님의 프로필';el('profModalNickname').textContent=d.nickname||'회원';for(const [id,key,publicKey]of[['profModalPhone','phone','isPhonePublic'],['profModalBirth','birth','isBirthPublic'],['profModalAddress','address','isAddressPublic']])el(id).textContent=(d[publicKey]||isChatAdmin(userLevel))?(d[key]||'아직 적지 않았어요'):'비공개';el('profileModal').classList.remove('hidden');}catch(e){feedback('프로필을 불러오지 못했어요. 다시 눌러주세요.');}}
+let dmTarget='';function openMessageModal(){el('contextMenu').classList.add('hidden');dmTarget=selectedTargetEmail;if(!dmTarget)return;el('msgTargetName').textContent=selectedTargetName+'님에게';el('directMsgInput').value='';el('messageModal').classList.remove('hidden');el('directMsgInput').focus();}
+async function sendDirectMessage(){const content=el('directMsgInput').value.trim();if(!content||!dmTarget||!ready)return;el('dmSendButton').disabled=true;try{await db.collection('messages').add({sender:userEmail,senderNickname:userNickname,receiver:dmTarget,content,isRead:false,timestamp:firebase.firestore.FieldValue.serverTimestamp()});closeModal('messageModal');feedback('쪽지를 보냈어요.');}catch(e){feedback('쪽지를 보내지 못했어요. 다시 눌러주세요.');}finally{el('dmSendButton').disabled=false;}}
+async function kickUser(){el('contextMenu').classList.add('hidden');if(!isChatAdmin(userLevel)||!selectedTargetEmail||selectedTargetEmail===userEmail)return;const target=selectedTargetEmail;if(!confirm(selectedTargetName+'님을 채팅방에서 내보낼까요?'))return;try{const member=await db.collection('users').doc(target).get();if(member.exists&&isChatAdmin(member.data().level))return feedback('다른 관리자는 내보낼 수 없어요.');const snap=await db.collection('chat_presence').where('email','==',target).get();let batch=db.batch(),n=0;for(const doc of snap.docs){batch.update(doc.ref,{kicked:true});if(++n===400){await batch.commit();batch=db.batch();n=0;}}if(n)await batch.commit();feedback('채팅방에서 내보냈어요.');}catch(e){feedback('내보내지 못했어요. 관리자 쓰기 권한을 확인해 주세요.');}}
+function widenChat(){try{window.resizeTo(1000,780);}catch{} }
+window.addEventListener('offline',()=>setStatus('인터넷 연결을 기다려요'));
+window.addEventListener('online',()=>{setStatus('다시 연결하는 중…');heartbeat();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')heartbeat();});
+window.addEventListener('pagehide',()=>{cleanup();});window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 
-        // ==========================================
-        // [2] 로그인 상태 감지 및 초기화
-        // ==========================================
-        auth.onAuthStateChanged(async user => {
-            if(user) {
-                userEmail = user.email;
-                entryTime = new Date(); 
-                
-                const userDoc = await db.collection("users").doc(userEmail).get();
-                if (userDoc.exists && userDoc.data().nickname) {
-                    userNickname = userDoc.data().nickname;
-                } else {
-                    userNickname = userEmail.split('@')[0]; 
-                }
-
-                enterRoom();
-                listenChat();
-                listenPresence();
-            } else {
-                alert("로그인이 필요한 서비스입니다.");
-                window.close(); 
-            }
-        });
-
-        // ==========================================
-        // [3] 접속자 시스템 및 강퇴 감지
-        // ==========================================
-        async function enterRoom() {
-            const presenceRef = db.collection("chat_presence").doc(userEmail);
-            await presenceRef.set({
-                email: userEmail,
-                nickname: userNickname,
-                lastActive: firebase.firestore.FieldValue.serverTimestamp(),
-                kicked: false // 강퇴 상태 초기화
-            });
-
-            // 내 상태 실시간 감지 (강퇴당했을 경우 처리)
-            presenceRef.onSnapshot(doc => {
-                if (doc.exists && doc.data().kicked === true) {
-                    alert("⚠️ 관리자에 의해 채팅방에서 강제 퇴장되었습니다.");
-                    window.close(); // 창 닫기
-                }
-            });
-
-            const exitRoom = () => { presenceRef.delete(); };
-            window.addEventListener('beforeunload', exitRoom);
-            window.addEventListener('pagehide', exitRoom); 
-        }
-
-        function listenPresence() {
-            db.collection("chat_presence").onSnapshot(snapshot => {
-                const listEl = document.getElementById('onlineUsersList');
-                listEl.innerHTML = "";
-                let count = 0;
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if(data.kicked) return; // 강퇴된 유저는 제외
-
-                    count++;
-                    const isMe = data.email === userEmail;
-                    const li = document.createElement('li');
-                    
-                    if (isMe) li.innerHTML = `<span style="color: var(--accent-color); font-weight: bold;">${data.nickname}</span> (나)`;
-                    else li.innerText = data.nickname;
-
-                    // 목록에서도 우클릭 메뉴 사용 가능
-                    if (!isMe) {
-                        li.oncontextmenu = (e) => openContextMenu(e, data.email);
-                    }
-                    listEl.appendChild(li);
-                });
-                
-                document.getElementById('onlineCount').innerText = count;
-                if(count === 0) listEl.innerHTML = "<li style='color:#999; text-align:center;'>접속자가 없습니다.</li>";
-            });
-        }
-
-        function toggleOnlineUsers() {
-            const wrapper = document.getElementById('onlineUsersWrapper');
-            const icon = document.getElementById('onlineToggleIcon');
-            if (wrapper.classList.contains('hidden')) {
-                wrapper.classList.remove('hidden');
-                icon.innerText = '▲';
-            } else {
-                wrapper.classList.add('hidden');
-                icon.innerText = '▼';
-            }
-        }
-
-        // ==========================================
-        // [4] 메시지 전송 및 수신
-        // ==========================================
-        async function sendChat() {
-            const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if(!msg) return;
-            
-            input.value = "";
-            input.focus();
-            
-            await db.collection("chats").add({
-                sender: userEmail,
-                nickname: userNickname, 
-                text: msg,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
-        function listenChat() {
-            const isAdmin = ADMIN_EMAILS.includes(userEmail);
-            let query = db.collection("chats");
-
-            if (!isAdmin) query = query.where("timestamp", ">", entryTime);
-            
-            query.orderBy("timestamp", "asc")
-                .onSnapshot(snapshot => {
-                    const chatBox = document.getElementById('chatBox');
-                    
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === "added") {
-                            const data = change.doc.data();
-                            const isMine = data.sender === userEmail;
-                            
-                            let timeStr = "방금 전";
-                            if (data.timestamp) {
-                                const date = data.timestamp.toDate();
-                                const hh = String(date.getHours()).padStart(2, '0');
-                                const mm = String(date.getMinutes()).padStart(2, '0');
-                                timeStr = `${date.getMonth()+1}/${date.getDate()} ${hh}:${mm}`;
-                            }
-
-                            const container = document.createElement('div');
-                            container.className = `msg-container ${isMine ? 'mine' : 'others'}`;
-
-                            const displayNick = data.nickname || data.sender.split('@')[0];
-                            const nameDiv = document.createElement('div');
-                            nameDiv.className = 'sender-name';
-                            nameDiv.innerText = isMine ? '나' : displayNick;
-                            
-                            // [추가] 닉네임 우클릭 이벤트 바인딩
-                            if(!isMine) {
-                                nameDiv.oncontextmenu = (e) => openContextMenu(e, data.sender);
-                            }
-
-                            const msgDiv = document.createElement('div');
-                            msgDiv.className = `msg ${isMine ? 'mine' : 'others'}`;
-                            msgDiv.innerText = data.text;
-
-                            const timeDiv = document.createElement('div');
-                            timeDiv.className = 'msg-time';
-                            timeDiv.innerText = timeStr;
-
-                            container.appendChild(nameDiv);
-                            container.appendChild(msgDiv);
-                            container.appendChild(timeDiv);
-                            
-                            chatBox.appendChild(container);
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                        }
-                    });
-                });
-        }
-
-        // ==========================================
-        // [5] 우클릭 컨텍스트 메뉴 로직
-        // ==========================================
-        function openContextMenu(e, targetEmail) {
-            e.preventDefault();
-            selectedTargetEmail = targetEmail;
-            
-            const menu = document.getElementById('contextMenu');
-            const kickBtn = document.getElementById('kickMenuBtn');
-
-            // 관리자 여부 확인 후 강퇴 버튼 노출
-            if (ADMIN_EMAILS.includes(userEmail)) kickBtn.classList.remove('hidden');
-            else kickBtn.classList.add('hidden');
-
-            // 마우스 위치에 메뉴 표시 (화면 밖으로 나가지 않게 조정)
-            let x = e.pageX;
-            let y = e.pageY;
-            menu.style.left = x + "px";
-            menu.style.top = y + "px";
-            menu.classList.remove('hidden');
-        }
-
-        // 화면 다른 곳 클릭 시 메뉴 닫기
-        document.addEventListener('click', () => { 
-            const menu = document.getElementById('contextMenu'); 
-            if (menu) menu.classList.add('hidden'); 
-        });
-
-        // 5-1. 프로필 보기
-        async function openProfileModal() {
-            if(!selectedTargetEmail) return;
-            const doc = await db.collection("users").doc(selectedTargetEmail).get();
-            if(!doc.exists) return alert("해당 사용자의 정보를 찾을 수 없습니다.");
-            
-            const data = doc.data();
-            const isAdmin = ADMIN_EMAILS.includes(userEmail); 
-            const displayNick = data.nickname || selectedTargetEmail.split('@')[0];
-            
-            document.getElementById('profModalTitle').innerText = `${displayNick}님의 프로필`;
-            document.getElementById('profModalEmail').innerText = selectedTargetEmail;
-
-            const formatField = (val, isPublic) => {
-                if (!val) return "<span style='color:#ccc;'>미입력</span>";
-                if (isPublic || isAdmin) return val;
-                return "<span style='color:var(--accent-color);'>🔒 비공개</span>";
-            };
-
-            document.getElementById('profModalPhone').innerHTML = formatField(data.phone, data.isPhonePublic);
-            document.getElementById('profModalBirth').innerHTML = formatField(data.birth, data.isBirthPublic);
-            document.getElementById('profModalAddress').innerHTML = formatField(data.address, data.isAddressPublic);
-
-            document.getElementById('profileModal').classList.remove('hidden');
-        }
-
-        // 5-2. 쪽지 보내기 창 열기
-        function openMessageModal() {
-            if(!selectedTargetEmail) return;
-            const displayNick = selectedTargetEmail.split('@')[0];
-            document.getElementById('msgTargetName').innerHTML = `받는 사람: <b>${displayNick}</b> (${selectedTargetEmail})`;
-            document.getElementById('directMsgInput').value = "";
-            document.getElementById('messageModal').classList.remove('hidden');
-        }
-
-        // 쪽지 전송 실행 (messages 컬렉션)
-        async function sendDirectMessage() {
-            const content = document.getElementById('directMsgInput').value.trim();
-            if(!content) return alert("내용을 입력해 주세요.");
-
-            try {
-                await db.collection("messages").add({
-                    sender: userEmail, 
-                    senderNickname: userNickname,
-                    receiver: selectedTargetEmail, 
-                    content: content, 
-                    isRead: false,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("쪽지가 전송되었습니다.");
-                document.getElementById('messageModal').classList.add('hidden');
-            } catch (e) { alert("쪽지 발송 중 오류가 발생했습니다."); }
-        }
-
-        // 5-3. 강퇴하기 (관리자 전용)
-        async function kickUser() {
-            if(!selectedTargetEmail) return;
-            if(!confirm(`[${selectedTargetEmail}]\n이 사용자를 현재 채팅방에서 강퇴하시겠습니까?`)) return;
-
-            try {
-                // 대상의 접속 상태 문서의 kicked 값을 true로 업데이트
-                await db.collection("chat_presence").doc(selectedTargetEmail).update({
-                    kicked: true
-                });
-                alert("강퇴 처리가 완료되었습니다.");
-            } catch (e) {
-                alert("강퇴 처리 중 오류가 발생했습니다.");
-            }
-        }
-    </script>
-</body>
-</html>
+</script></body></html>
