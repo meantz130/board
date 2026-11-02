@@ -180,7 +180,9 @@
         .image-preview img { width: 100%; height: 100%; object-fit: cover; }
         .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; line-height: 20px; text-align: center; cursor: pointer; padding: 0; transition: background 0.2s; }
         .remove-btn:hover { background: var(--accent-color); }
-    </style>
+    
+#rankNameFields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}#rankNameFields .rank-name-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:6px 10px;align-items:center;background:#fff;border:1px solid var(--border-color);border-radius:9px;padding:12px}#rankNameFields .rank-category{font-size:11px;color:var(--text-sub);text-align:right}#rankNameFields input{grid-column:1/-1;width:100%;min-width:0;margin:0;padding:10px;box-sizing:border-box}#adminUserTableBody .member-rank{display:flex;flex-direction:column;gap:6px;min-width:125px}#adminUserTableBody .member-rank select{width:100%;padding:7px;border:1px solid var(--border-color);border-radius:6px;background:#fff}#adminUserTableBody .member-level-status{font-size:11px;white-space:normal;min-height:16px}@media(max-width:900px){#rankNameFields{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){#rankNameFields{grid-template-columns:1fr}}
+</style>
 <style>
 :root{--dark-bg:#111917;--sidebar-bg:#17211e;--accent-color:#267d69;--point-color:#267d69;--bg-color:#f3f6f5;--card-bg:#fff;--text-main:#202b27;--text-sub:#718079;--border-color:#e0e8e4}
 body{line-height:1.6}nav{background:var(--sidebar-bg)!important}nav h3{letter-spacing:2px}nav ul li{margin:3px 10px;border-radius:8px;border-left:3px solid transparent}nav ul li:hover{background:#ffffff0d;color:#bcf4e1}nav ul li.active{background:#c3f5e51c;color:#c3f5e5;border-left-color:#8fe2c6}nav ul li:active{background:#c3f5e52b}.profile-name b,#sideUserPoints{color:#a1e8ce!important}.menu-category{background:transparent;color:#92aaa0;font-size:12px;letter-spacing:1px}.menu-category:hover{background:#ffffff08}.card{border:1px solid var(--border-color);box-shadow:0 4px 18px #14281f04;border-radius:14px}.home-banner{background:linear-gradient(120deg,#152b23,#244c3e);box-shadow:none;min-height:190px}.home-banner h1{font-size:30px}.banner-icon{opacity:.9}button{transition:background .18s,transform .18s}button:active{transform:translateY(1px)}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #70ceb0;outline-offset:3px}.new-badge{background:#d9f3e7;color:#205e49}.notice-row{background:#f4faf7!important}.highlight-title{color:#267d69!important}#homeView .card>div{background:#f7faf8!important}.cafe-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}.cafe-tile{border:1px solid var(--border-color);border-radius:14px;background:white;padding:22px;text-align:left;color:var(--text-main);font:inherit}.cafe-tile:hover{border-color:#69b99c;background:#f5fcf8}.cafe-tile strong{display:block;font-size:17px;margin-bottom:4px}.cafe-tile small{color:var(--text-sub)}.cafe-strip{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;padding:15px 20px;border:1px solid var(--border-color);border-radius:12px;background:#fff;margin-bottom:20px;color:var(--text-sub);font-size:13px}.point-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 22px}.point-head h2{margin:0;font-size:26px}.wallet-pill{background:#e5f6ee;color:#24634e;padding:12px 20px;border-radius:30px;font-weight:800}.point-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}.point-tabs button,.mint-btn{border:1px solid var(--border-color);background:white;border-radius:8px;padding:10px 16px;font:inherit;color:var(--text-main)}.point-tabs button.selected,.mint-btn.primary{background:#215f4c;color:white;border-color:#215f4c}.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.shop-card{padding:24px;border:1px solid var(--border-color);border-radius:14px;background:white}.shop-art{height:76px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#f1f8f4;margin-bottom:14px}.shop-art img{width:48px;height:48px;image-rendering:auto}.nick-icon{width:19px;height:19px;vertical-align:-4px;margin-right:5px}.shop-card h3{margin:0 0 4px}.shop-card p{color:var(--text-sub);font-size:13px}.shop-card button{width:100%;margin-top:12px}.game-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.game-card{background:white;border:1px solid var(--border-color);border-radius:14px;padding:26px}.game-card input{width:100%;margin:10px 0}.game-symbol{font-size:45px}.game-result{background:#edf6f1;padding:16px;border-radius:10px;margin:18px 0;min-height:58px}.history-row{display:flex;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid var(--border-color)}.history-row small{color:var(--text-sub)}.point-note{font-size:13px;color:var(--text-sub);line-height:1.8}.mint-btn:disabled{opacity:.5;cursor:wait}#pointStatus{padding:12px 0;color:#267d69}#sidebar .cafe-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:14px}#sidebar .cafe-shortcuts button{background:#ffffff09;color:#cbebdf;border:1px solid #ffffff15;border-radius:8px;padding:10px 4px}#sidebar .cafe-shortcuts button:hover{background:#91e5c323}#loginOverlay{background:radial-gradient(ellipse at top,#284a3b,#101815)}
@@ -1535,7 +1537,16 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     }
     function refreshRankDisplay(){document.getElementById('sideUserLevel').textContent=currentUserLevel+' · '+rankLabel(currentUserLevel);document.getElementById('adminMenuBtn').classList.toggle('hidden',!canManageAd());document.getElementById('rankNameEditor').classList.toggle('hidden',Number(currentUserLevel)!==9);document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());if(!isMessageAdmin()){document.getElementById('msgBroadcast').checked=false;toggleMsgBroadcast();}}
     function listenRankNames(){if(rankNamesUnsub)rankNamesUnsub();rankNamesUnsub=db.collection('settings').doc('rankNames').onSnapshot(doc=>{rankNames=doc.exists?(doc.data().names||{}):{};refreshRankDisplay();renderRankNameEditor();},()=>{document.getElementById('rankNameStatus').textContent='등급 이름을 불러오지 못했어요.';});}
-    function renderRankNameEditor(){const box=document.getElementById('rankNameFields');box.replaceChildren();if(Number(currentUserLevel)!==9)return;for(let level=1;level<=9;level++){const label=document.createElement('label');label.style.display='block';label.textContent='Lv.'+level+' · '+rankGroup(level)+' ';const input=document.createElement('input');input.id='rankName_'+level;input.maxLength=20;input.value=rankLabel(level);label.append(input);box.append(label);}}
+    function renderRankNameEditor(){
+        const box=document.getElementById('rankNameFields');box.replaceChildren();if(Number(currentUserLevel)!==9)return;
+        for(let level=1;level<=9;level++){
+            const label=document.createElement('label');label.className='rank-name-row';
+            const number=document.createElement('b');number.textContent='Lv.'+level;
+            const category=document.createElement('span');category.className='rank-category';category.textContent=rankGroup(level);
+            const input=document.createElement('input');input.id='rankName_'+level;input.maxLength=20;input.value=rankLabel(level);input.setAttribute('aria-label','레벨 '+level+' 등급 이름');
+            label.append(number,category,input);box.append(label);
+        }
+    }
     async function saveRankNames(){if(Number(currentUserLevel)!==9)return alert('최고관리자만 설정할 수 있어요.');const names={};for(let i=1;i<=9;i++){names[i]=document.getElementById('rankName_'+i).value.trim();if(!names[i]||names[i].length>20)return alert('등급 이름을 1~20자로 입력해 주세요.');}try{const me=await db.collection('users').doc(currentUserEmail).get({source:'server'});if(!me.exists||Number(me.data().level)!==9)throw Error('최고관리자 권한이 필요해요.');await db.collection('settings').doc('rankNames').set({names});document.getElementById('rankNameStatus').textContent='등급 이름을 저장했어요.';}catch(e){document.getElementById('rankNameStatus').textContent='저장하지 못했어요. '+e.message;}}
 
     // ==========================================
@@ -1556,33 +1567,26 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
         if(n===2){renderRankNameEditor();refreshRankDisplay();loadAllUsers();}
     }
 
-    async function loadAllUsers() {
-        const tbody = document.getElementById('adminUserTableBody');
-        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding: 30px;'>회원 정보를 불러오고 있어요…</td></tr>";
-        try {
-            const snapshot = await db.collection("users").get();
-            tbody.innerHTML = "";
-            snapshot.forEach(doc => {
-                const email = doc.id;
-                const data = doc.data();
-                const safeId = email.replace(/[@.]/g, ''); 
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color:var(--accent-color); font-weight:bold;">${email}</td>
-                    <td>${data.nickname || '-'}</td>
-                    <td>${data.phone || '-'}</td>
-                    <td>${data.address || '-'}</td>
-                    <td style="font-weight:bold; color:var(--point-color);">${data.points || 0}</td>
-                    <td><small>${escapeCafe(rankLabel(data.level))} · ${rankGroup(data.level)}</small><input type="number" id="levelInput_${safeId}" min="1" max="9" value="${data.level || 0}" style="width: 50px; padding: 6px; text-align:center;"></td>
-                    <td style="display: flex; gap: 5px;">
-                        <button class="btn-main" style="padding: 6px 10px; font-size: 11px;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">수정</button>
-                        <button class="btn-sub" style="padding: 6px 10px; font-size: 11px; color:var(--accent-color); border-color:var(--accent-color);" onclick="deleteUserFromDB('${email}')">강퇴</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) { tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>목록을 불러오지 못했습니다.</td></tr>"; }
+    let memberListGeneration=0;
+    async function loadAllUsers(){
+        const token=++memberListGeneration,tbody=document.getElementById('adminUserTableBody');tbody.replaceChildren();
+        const note=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;cell.textContent='회원 정보를 불러오고 있어요…';note.append(cell);tbody.append(note);
+        try{
+            const snapshot=await db.collection('users').get();if(token!==memberListGeneration)return;tbody.replaceChildren();let index=0;
+            for(const doc of snapshot.docs){
+                const email=doc.id,data=doc.data(),safeId='member_'+index++,tr=document.createElement('tr');
+                for(const value of [email,data.nickname||'-',data.phone||'-',data.address||'-',data.points||0]){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}
+                const td=document.createElement('td'),wrap=document.createElement('div');wrap.className='member-rank';
+                const label=document.createElement('small');label.id='levelLabel_'+safeId;label.textContent='현재: Lv.'+(Number(data.level)||0)+' · '+rankLabel(data.level);
+                const select=document.createElement('select');select.id='levelInput_'+safeId;select.setAttribute('aria-label',(data.nickname||email)+' 등급 선택');
+                if(!Number.isInteger(Number(data.level))||Number(data.level)<1||Number(data.level)>9){const option=document.createElement('option');option.value='';option.textContent='등급을 선택하세요';select.append(option);}
+                for(let level=1;level<=9;level++){const option=document.createElement('option');option.value=String(level);option.textContent='Lv.'+level+' · '+rankLabel(level);select.append(option);}select.value=String(Number(data.level)||'');select.disabled=Number(currentUserLevel)!==9;
+                const status=document.createElement('span');status.id='levelStatus_'+safeId;status.className='member-level-status';status.setAttribute('role','status');wrap.append(label,select,status);td.append(wrap);tr.append(td);
+                const actions=document.createElement('td'),save=document.createElement('button');save.id='levelSave_'+safeId;save.className='btn-main';save.textContent='등급 부여';save.disabled=Number(currentUserLevel)!==9;save.onclick=()=>updateSpecificUserLevel(email,safeId);
+                const kick=document.createElement('button');kick.className='btn-sub';kick.textContent='강퇴';kick.onclick=()=>deleteUserFromDB(email);actions.append(save,kick);tr.append(actions);tbody.append(tr);
+            }
+            if(snapshot.empty){cell.textContent='등록된 회원이 없습니다.';tbody.append(note);}
+        }catch(error){if(token!==memberListGeneration)return;cell.textContent='회원 목록을 불러오지 못했어요. '+(error.code||'');tbody.replaceChildren(note);}
     }
 
     async function deleteUserFromDB(targetEmail) {
@@ -1594,13 +1598,27 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
         } catch (error) { alert("삭제 중 오류가 발생했습니다."); }
     }
 
-    async function updateSpecificUserLevel(email, safeId) {
-        const newLevel = parseInt(document.getElementById(`levelInput_${safeId}`).value);
-        if (!Number.isInteger(newLevel)||newLevel<1||newLevel>9) return alert("1~9 레벨을 입력해 주세요.");
-        try {
-            await db.collection("users").doc(email).set({ level: newLevel }, { merge: true });
-            alert(`Lv.${newLevel} (으)로 수정 완료되었습니다.`);
-        } catch (error) { alert("수정 중 오류가 발생했습니다."); }
+    async function updateSpecificUserLevel(email,safeId){
+        const input=document.getElementById('levelInput_'+safeId),button=document.getElementById('levelSave_'+safeId),status=document.getElementById('levelStatus_'+safeId);
+        if(!input||!button||button.disabled)return;
+        const newLevel=Number(input.value),actor=currentUserEmail;
+        if(!Number.isInteger(newLevel)||newLevel<1||newLevel>9){status.textContent='1~9 레벨을 선택해 주세요.';return;}
+        if(Number(currentUserLevel)!==9){status.textContent='최고관리자만 등급을 부여할 수 있어요.';return;}
+        button.disabled=true;input.disabled=true;status.textContent='등급 저장 중…';
+        try{
+            if(!auth.currentUser||auth.currentUser.email!==actor)throw Error('다시 로그인해 주세요.');
+            const me=await db.collection('users').doc(actor).get({source:'server'});
+            if(!me.exists||Number(me.data().level)!==9)throw Error('최고관리자 권한을 확인하지 못했어요.');
+            const ref=db.collection('users').doc(email);
+            await ref.update({level:newLevel});
+            const saved=await ref.get({source:'server'});
+            if(!saved.exists||Number(saved.data().level)!==newLevel)throw Error('저장된 등급이 일치하지 않아요. 다시 확인해 주세요.');
+            document.getElementById('levelLabel_'+safeId).textContent='현재: Lv.'+newLevel+' · '+rankLabel(newLevel);
+            status.textContent='Lv.'+newLevel+' 등급 부여 완료';
+            if(email===currentUserEmail){currentUserLevel=newLevel;refreshRankDisplay();}
+        }catch(error){
+            status.textContent=error.code==='permission-denied'?'Firebase 보안 규칙이 등급 변경을 차단했습니다. users 문서의 최고관리자 수정 권한을 확인해 주세요.':error.code==='not-found'?'해당 회원 정보가 없습니다. 목록을 다시 열어주세요.':'등급 저장 실패: '+(error.message||error.code||'연결을 확인해 주세요.');
+        }finally{button.disabled=input.disabled=Number(currentUserLevel)!==9;}
     }
 
     async function saveAllSettings() {
