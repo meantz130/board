@@ -392,11 +392,11 @@ main{min-width:0}#desktopAdRail{display:none}@media(min-width:1100px) and (hover
                     <div class="card">
                         <div class="tab-container">
                             <button class="tab-btn active" id="adminTab1" onclick="switchAdminTab(1)">게시판 관리</button>
-                            <button class="tab-btn" id="adminTab2" onclick="switchAdminTab(2)">회원 관리</button>
+                            <button class="tab-btn" id="adminTab2" onclick="switchAdminTab(2)">회원 관리</button><button class="tab-btn" id="adminTab3" onclick="switchAdminTab(3)">배너 관리</button>
                         </div>
                     
                         <!-- 게시판 관리 탭 -->
-                        <div id="adminTabContent1"><section class="ad-settings"><h3>오른쪽 배너</h3><p>PC 화면에만 보여요. 세로 이미지(300 × 900 정도)가 잘 어울려요.</p><label for="adFile">이미지 올리기</label><input type="file" id="adFile" accept="image/png,image/jpeg,image/webp" onchange="prepareAdImage(this.files[0])"><div id="adPreview"></div><label for="adLink">클릭하면 이동할 주소 (선택)</label><input id="adLink" type="url" placeholder="https://" oninput="adDirty=true"><label for="adAlt">이미지 설명</label><input id="adAlt" maxlength="100" placeholder="배너에 담긴 내용을 적어주세요" oninput="adDirty=true"><label><input id="adEnabled" type="checkbox" onchange="adDirty=true"> 배너 표시하기</label><div class="ad-actions"><button class="btn-main" id="saveAdButton" onclick="saveAd()">배너 저장</button><button class="btn-sub" onclick="removeAd()">배너 내리기</button></div><p id="adStatus" role="status" aria-live="polite"></p></section>
+                        <div id="adminTabContent1">
                             <div class="admin-guide"><b>공지 게시판은 언제나 이 자리에.</b><br>홈 공지사항에는 이 게시판의 글만 표시됩니다. 공지 게시판은 삭제·이름 변경이 불가능하며, 왼쪽 메뉴 상단에 고정됩니다.</div><div id="menuEditArea" style="margin-bottom: 20px;"></div>
                             
                             <div style="display:flex; gap:8px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-wrap: wrap; align-items: center;">
@@ -411,8 +411,8 @@ main{min-width:0}#desktopAdRail{display:none}@media(min-width:1100px) and (hover
                             <button class="btn-main" style="width:100%;" onclick="saveAllSettings()">메뉴 설정 저장</button>
                         </div>
 
-                        <!-- 사용자 관리 탭 -->
-                        <div id="adminTabContent2" class="hidden">
+                        <div id="adminTabContent3" class="hidden"><section class="ad-settings"><h3>오른쪽 배너</h3><p>PC 화면에만 보여요. 세로 이미지(300 × 900 정도)가 잘 어울려요.</p><label for="adFile">이미지 올리기</label><input type="file" id="adFile" accept="image/png,image/jpeg,image/webp" onchange="prepareAdImage(this.files[0])"><div id="adPreview"></div><label for="adLink">클릭하면 이동할 주소 (선택)</label><input id="adLink" type="url" placeholder="https://" oninput="adDirty=true"><label for="adAlt">이미지 설명</label><input id="adAlt" maxlength="100" placeholder="배너에 담긴 내용을 적어주세요" oninput="adDirty=true"><label><input id="adEnabled" type="checkbox" onchange="adDirty=true"> 배너 표시하기</label><div class="ad-actions"><button class="btn-main" id="saveAdButton" onclick="saveAd()">배너 저장</button><button class="btn-sub" onclick="removeAd()">배너 내리기</button></div><p id="adStatus" role="status" aria-live="polite"></p></section></div><!-- 사용자 관리 탭 -->
+                        <div id="adminTabContent2" class="hidden"><section id="rankNameEditor" class="admin-guide hidden"><b>등급별 이름 설정</b><p>1~6 일반회원 · 7~8 관리자 · 9 최고관리자 (권한 구분은 고정)</p><div id="rankNameFields"></div><button class="btn-main" onclick="saveRankNames()">등급 이름 저장</button><p id="rankNameStatus" role="status"></p></section>
                             <div style="overflow-x: auto;">
                                 <table style="min-width: 800px; font-size: 13px;">
                                     <thead>
@@ -525,9 +525,9 @@ main{min-width:0}#desktopAdRail{display:none}@media(min-width:1100px) and (hover
             <div id="msgListArea" style="flex: 1; overflow-y: auto; max-height: 350px;"></div>
         
             <div id="msgWriteArea" class="hidden" style="flex: 1;">
-                <input type="text" id="msgReceiverInput" placeholder="받는 사람의 이메일(ID) 입력">
+                <div id="msgRecipients"></div><input type="text" id="msgReceiverInput" placeholder="닉네임 검색 후 선택 (최대 4명)" autocomplete="off" oninput="searchMsgRecipients()"><div id="msgRecipientResults" role="status" style="max-height:150px;overflow:auto"></div><label id="msgBroadcastLabel" class="hidden"><input type="checkbox" id="msgBroadcast" onchange="toggleMsgBroadcast()"> 전체 회원에게 보내기</label>
                 <textarea id="msgContentInput" placeholder="전달할 내용을 작성해 주세요." style="height:180px; resize: none; margin-bottom: 15px;"></textarea>
-                <button class="btn-main" style="width:100%;" onclick="sendDirectMessage()">전송하기</button>
+                <button class="btn-main" id="msgSendButton" style="width:100%;" onclick="sendDirectMessage()">전송하기</button>
             </div>
 
             <div id="msgReadArea" class="hidden" style="flex: 1;">
@@ -727,7 +727,7 @@ async function playCafe(kind,choice){
  }catch(e){clearInterval(timer);stage.classList.remove('rolling');result.textContent=e.message;stage.innerHTML=kind==='slot'?'<span class="reel">?</span><span class="reel">?</span><span class="reel">?</span>':'<span class="game-object">?</span>';}
  finally{clearInterval(timer);walletBusy=false;buttons.forEach(b=>b.disabled=false);input.disabled=false;}
 }
-function canManageAd(){return ADMIN_EMAILS.includes(currentUserEmail)||currentUserLevel===9;}
+function canManageAd(){return Number(currentUserLevel)>=7&&Number(currentUserLevel)<=9;}
 function safeAdLink(value){if(!value)return '';try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:'';}catch{return '';}}
 function drawAd(data){const target=document.getElementById('desktopAdContent');target.replaceChildren();if(!data?.enabled||!/^data:image\/(jpeg|png|webp);base64,/.test(data.image||'')){target.innerHTML='<div class="ad-placeholder">MEANTZ<br><strong>여기, 잠깐.</strong><p>소식이 생기면<br>이곳에 걸어둘게요.</p></div>';return;}const img=document.createElement('img');img.src=data.image;img.alt=data.alt||'카페 배너';const link=safeAdLink(data.link);if(link){const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener noreferrer';a.append(img);target.append(a);}else target.append(img);}
 function fillAdEditor(data){adDraft=data?.image||'';document.getElementById('adLink').value=data?.link||'';document.getElementById('adAlt').value=data?.alt||'';document.getElementById('adEnabled').checked=!!data?.enabled;previewAd();}
@@ -769,7 +769,7 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
             }, { merge: true });
             
             listenToOnlineUsers(); 
-            listenToMessages();         
+            listenToMessages();listenRankNames();refreshRankDisplay();         
 
             loginOverlay.style.display = 'none';
             mainApp.style.display = 'flex'; 
@@ -785,10 +785,11 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
             if (walletUnsubscribe) walletUnsubscribe();
             walletUnsubscribe = db.collection('users').doc(currentUserEmail).onSnapshot(snapshot => {
                 if (!snapshot.exists) return;
-                syncWallet(snapshot.data());
+                syncWallet(snapshot.data());refreshRankDisplay();
                 if (!isPointPopup && !walletBusy && !document.getElementById('pointView').classList.contains('hidden')) renderPointBody();
             }, () => { console.warn('포인트 실시간 갱신을 사용할 수 없습니다.'); });
         } else {
+            if(msgUnsubscribe){msgUnsubscribe();msgUnsubscribe=null;}if(onlineUsersUnsubscribe){onlineUsersUnsubscribe();onlineUsersUnsubscribe=null;}if(rankNamesUnsub){rankNamesUnsub();rankNamesUnsub=null;}closeMessageModal();msgRecipients=[];currentUserEmail='';currentUserLevel=0;rankNames={};
             if (walletUnsubscribe) { walletUnsubscribe(); walletUnsubscribe=null; }
             if(adUnsubscribe){adUnsubscribe();adUnsubscribe=null;}
             loginOverlay.style.display = 'flex';
@@ -1325,6 +1326,7 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
                     const li = document.createElement('li');
                     
                     li.innerHTML = `${iconMarkup(data.equippedIcon)}${escapeCafe(nickname)}${isMe ? ' (나)' : ''}`;
+                    if(!isMe){li.tabIndex=0;li.style.cursor='pointer';li.setAttribute('role','button');li.onclick=e=>{e.stopPropagation();openUserMenu(e,doc.id);};li.oncontextmenu=e=>{e.stopPropagation();openUserMenu(e,doc.id);};li.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();openUserMenu({preventDefault(){},clientX:li.getBoundingClientRect().left,clientY:li.getBoundingClientRect().top},doc.id);}};}
                     
                     list.appendChild(li);
                     count++;
@@ -1353,19 +1355,18 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
         if (userEmail === currentUserEmail) return; // 본인 클릭 시 무시
         selectedTargetUser = userEmail;
         const menu = document.getElementById('contextMenu');
-        menu.style.left = e.clientX + "px";
-        menu.style.top = e.clientY + "px";
+        menu.style.left = Math.max(8,Math.min(e.clientX,innerWidth-190)) + "px";
+        menu.style.top = Math.max(8,Math.min(e.clientY,innerHeight-180)) + "px";
         menu.classList.remove('hidden');
     }
 
     document.addEventListener('click', () => { const menu = document.getElementById('contextMenu'); if (menu) menu.classList.add('hidden'); });
 
     // 우클릭 기능 1. 쪽지 보내기
-    function clickSendMsgFromMenu() {
-        document.getElementById('contextMenu').classList.add('hidden');
-        openMessageModal();
-        switchMsgTab(3); 
-        document.getElementById('msgReceiverInput').value = selectedTargetUser; 
+    async function clickSendMsgFromMenu() {
+        const target=selectedTargetUser;document.getElementById('contextMenu').classList.add('hidden');
+        openMessageModal();switchMsgTab(3);
+        try{const doc=await db.collection('users').doc(target).get();if(doc.exists)addMsgRecipient({email:target,nickname:doc.data().nickname||target});}catch(e){alert('회원 정보를 불러오지 못했어요.');}
     }
 
     // 우클릭 기능 2. 프로필 보기 (공개 설정 반영)
@@ -1478,103 +1479,64 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     let currentMsgTab = 1;
     let msgUnsubscribe = null;
 
-    function listenToMessages() {
-        if (msgUnsubscribe) msgUnsubscribe();
-        msgUnsubscribe = db.collection("messages").where("receiver", "==", currentUserEmail).where("isRead", "==", false)
-            .onSnapshot(snap => {
-                const badge = document.getElementById('msgUnreadBadge');
-                if (snap.empty) badge.classList.add('hidden');
-                else { badge.classList.remove('hidden'); badge.innerText = snap.size > 99 ? "99+" : snap.size; }
-            });
+    let mailboxUnsub=null,mailboxGeneration=0,msgSearchGeneration=0,msgRecipients=[],msgSending=false,rankNames={},rankNamesUnsub=null;
+    const isMessageAdmin=()=>Number(currentUserLevel)>=7&&Number(currentUserLevel)<=9;
+    const rankGroup=level=>Number(level)===9?'최고관리자':Number(level)>=7&&Number(level)<=8?'관리자':Number(level)>=1&&Number(level)<=6?'일반회원':'미승인';
+    const rankLabel=level=>rankNames[level]||rankGroup(level);
+    const messageMillis=d=>d.timestamp?.toMillis?.()||0;
+    function stopMailbox(){mailboxGeneration++;if(mailboxUnsub)mailboxUnsub();mailboxUnsub=null;}
+    function listenToMessages(){
+        if(msgUnsubscribe)msgUnsubscribe();const email=currentUserEmail;
+        msgUnsubscribe=db.collection('messages').where('receiver','==',email).onSnapshot(snap=>{
+            if(currentUserEmail!==email)return;const count=snap.docs.filter(d=>!d.data().isRead).length,badge=document.getElementById('msgUnreadBadge');badge.classList.toggle('hidden',!count);badge.textContent=count>99?'99+':String(count);
+        },()=>{document.getElementById('msgUnreadBadge').classList.add('hidden');});
     }
-
-    function openMessageModal() { document.getElementById('messageModal').classList.remove('hidden'); switchMsgTab(1); }
-    function closeMessageModal() { document.getElementById('messageModal').classList.add('hidden'); }
-    function openChatPopup() { window.open('chat.html', 'MeantzChat', 'width=400,height=600'); }
-
-    function switchMsgTab(n) {
-        currentMsgTab = n;
-        document.getElementById('msgTab1').classList.toggle('active', n === 1);
-        document.getElementById('msgTab2').classList.toggle('active', n === 2);
-        document.getElementById('msgTab3').classList.toggle('active', n === 3);
-        document.getElementById('msgListArea').classList.toggle('hidden', n === 3);
-        document.getElementById('msgWriteArea').classList.toggle('hidden', n !== 3);
-        document.getElementById('msgReadArea').classList.add('hidden'); 
-        
-        if (n === 1) loadMessages("receiver"); 
-        if (n === 2) loadMessages("sender");   
-        if (n === 3) {
-            if(!selectedTargetUser) document.getElementById('msgReceiverInput').value = "";
-            document.getElementById('msgContentInput').value = "";
-            selectedTargetUser = ""; 
-        }
+    function openMessageModal(){if(!currentUserEmail)return;document.getElementById('messageModal').classList.remove('hidden');switchMsgTab(1);}
+    function closeMessageModal(){stopMailbox();msgSearchGeneration++;document.getElementById('messageModal').classList.add('hidden');}
+    function openChatPopup(){window.open('chat.html','MeantzChat','width=400,height=600');}
+    function switchMsgTab(n){
+        stopMailbox();currentMsgTab=n;for(let i=1;i<=3;i++)document.getElementById('msgTab'+i).classList.toggle('active',n===i);
+        document.getElementById('msgListArea').classList.toggle('hidden',n===3);document.getElementById('msgWriteArea').classList.toggle('hidden',n!==3);document.getElementById('msgReadArea').classList.add('hidden');
+        if(n===1||n===2)loadMessages(n===1?'receiver':'sender');
+        if(n===3){msgSearchGeneration++;msgRecipients=[];renderMsgRecipients();document.getElementById('msgReceiverInput').value='';document.getElementById('msgContentInput').value='';document.getElementById('msgRecipientResults').replaceChildren();document.getElementById('msgBroadcast').checked=false;document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());toggleMsgBroadcast();}
     }
-
-    async function loadMessages(type) {
-        const listArea = document.getElementById('msgListArea');
-        listArea.innerHTML = "<div style='text-align:center; padding: 30px;'>잠깐만요…</div>";
-        try {
-            const snap = await db.collection("messages").where(type, "==", currentUserEmail).orderBy("timestamp", "desc").get();
-            listArea.innerHTML = "";
-            if (snap.empty) return listArea.innerHTML = "<div style='text-align:center; padding: 30px; color:#888;'>보관된 쪽지가 없습니다.</div>";
-
-            snap.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = `msg-row ${data.isRead ? 'msg-read' : 'msg-unread'}`;
-                const date = data.timestamp ? data.timestamp.toDate() : new Date();
-                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-                
-                const targetName = type === "receiver" ? `보낸이: ${data.senderNickname || data.sender.split('@')[0]}` : `받는이: ${data.receiver.split('@')[0]}`;
-                const preview = data.content.length > 20 ? data.content.substring(0, 20) + "..." : data.content;
-
-                div.innerHTML = `
-                    <div style="flex:1;">
-                        <span style="font-size:11px; color:#267d69; margin-right:5px;">${type==="receiver" && !data.isRead ? '🔴' : ''}</span>${preview}
-                    </div>
-                    <div style="font-size:11px; text-align:right;"><div>${targetName}</div><div>${dateStr}</div></div>
-                `;
-                div.onclick = () => viewMessage(doc.id, data, type);
-                listArea.appendChild(div);
-            });
-        } catch(e) { listArea.innerHTML = "<div style='text-align:center; padding: 20px; color:red;'>목록을 불러올 수 없습니다.</div>"; }
+    function loadMessages(type){
+        const list=document.getElementById('msgListArea'),email=currentUserEmail,token=mailboxGeneration;list.textContent='불러오는 중…';
+        mailboxUnsub=db.collection('messages').where(type,'==',email).onSnapshot(snap=>{
+            if(token!==mailboxGeneration||email!==currentUserEmail)return;list.replaceChildren();const docs=snap.docs.slice().sort((a,b)=>messageMillis(b.data())-messageMillis(a.data())||a.id.localeCompare(b.id));
+            if(!docs.length){list.textContent='보관된 쪽지가 없습니다.';return;}
+            for(const doc of docs){const d=doc.data(),row=document.createElement('button');row.type='button';row.className='msg-row '+(d.isRead?'msg-read':'msg-unread');row.style.cssText='width:100%;text-align:left;border:0;background:transparent';
+                const content=document.createElement('span');content.style.flex='1';content.textContent=(type==='receiver'&&!d.isRead?'🔴 ':'')+String(d.content||'').slice(0,40);
+                const meta=document.createElement('small'),who=type==='receiver'?(d.senderNickname||d.sender):(d.receiverNickname||d.receiver);meta.textContent=(type==='receiver'?'보낸이: ':'받는이: ')+(who||'회원')+(d.broadcast?' · 전체 발송':'')+' · '+(messageMillis(d)?new Date(messageMillis(d)).toLocaleString('ko-KR'):'시간 확인 중');row.append(content,meta);row.onclick=()=>viewMessage(doc.id,d,type);list.append(row);}
+        },()=>{if(token===mailboxGeneration)list.textContent='목록을 불러오지 못했어요. 쪽지 읽기 권한을 확인해 주세요.';});
     }
-
-    async function viewMessage(docId, data, type) {
-        document.getElementById('msgListArea').classList.add('hidden');
-        document.getElementById('msgReadArea').classList.remove('hidden');
-        const date = data.timestamp ? data.timestamp.toDate() : new Date();
-        const dateStr = `${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        
-        const header = type === "receiver" ? `보낸 사람: <b>${data.senderNickname || data.sender}</b> (${data.sender})<br>받은 시간: ${dateStr}` 
-                                           : `받는 사람: <b>${data.receiver}</b><br>보낸 시간: ${dateStr}`;
-        document.getElementById('msgReadHeader').innerHTML = header;
-        document.getElementById('msgReadContent').innerText = data.content;
-        
-        if (type === "receiver" && !data.isRead) await db.collection("messages").doc(docId).update({ isRead: true });
+    async function viewMessage(id,data,type){
+        document.getElementById('msgListArea').classList.add('hidden');document.getElementById('msgReadArea').classList.remove('hidden');
+        document.getElementById('msgReadHeader').textContent=(type==='receiver'?'보낸 사람: '+(data.senderNickname||data.sender):'받는 사람: '+(data.receiverNickname||data.receiver))+' · '+(messageMillis(data)?new Date(messageMillis(data)).toLocaleString('ko-KR'):'시간 확인 중');document.getElementById('msgReadContent').textContent=data.content||'';
+        if(type==='receiver'&&!data.isRead&&data.receiver===currentUserEmail)try{await db.collection('messages').doc(id).update({isRead:true});}catch(e){alert('내용은 열었지만 읽음 상태를 저장하지 못했어요.');}
     }
-
-    async function sendDirectMessage() {
-        const receiverEmail = document.getElementById('msgReceiverInput').value.trim();
-        const content = document.getElementById('msgContentInput').value.trim();
-
-        if (!receiverEmail) return alert("받는 사람의 아이디를 입력해 주세요.");
-        if (!content) return alert("내용을 입력해 주세요.");
-        if (receiverEmail === currentUserEmail) return alert("자신에게는 보낼 수 없습니다.");
-
-        try {
-            const userDoc = await db.collection("users").doc(receiverEmail).get();
-            if (!userDoc.exists) return alert("존재하지 않는 사용자입니다. 아이디를 다시 확인해 주세요.");
-
-            await db.collection("messages").add({
-                sender: currentUserEmail, senderNickname: currentUserNickname,
-                receiver: receiverEmail, content: content, isRead: false,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert("성공적으로 전송되었습니다!");
-            switchMsgTab(2); 
-        } catch (e) { alert("발송 중 오류가 발생했습니다."); }
+    function renderMsgRecipients(){const box=document.getElementById('msgRecipients');box.replaceChildren();for(const person of msgRecipients){const btn=document.createElement('button');btn.type='button';btn.className='btn-sub';btn.textContent=person.nickname+' ×';btn.onclick=()=>{msgRecipients=msgRecipients.filter(p=>p.email!==person.email);renderMsgRecipients();};box.append(btn);}}
+    function addMsgRecipient(person){if(msgSending)return;if(msgRecipients.some(p=>p.email===person.email))return;if(msgRecipients.length>=4)return alert('최대 4명까지 선택할 수 있어요.');if(person.email===currentUserEmail)return;msgRecipients.push(person);renderMsgRecipients();document.getElementById('msgReceiverInput').value='';document.getElementById('msgRecipientResults').replaceChildren();msgSearchGeneration++;}
+    async function searchMsgRecipients(){
+        const token=++msgSearchGeneration,query=document.getElementById('msgReceiverInput').value.trim(),box=document.getElementById('msgRecipientResults');box.replaceChildren();if(!query)return;box.textContent='검색 중…';const email=currentUserEmail;
+        try{const snap=await db.collection('users').orderBy('nickname').startAt(query).endAt(query+'\uf8ff').limit(20).get();if(token!==msgSearchGeneration||email!==currentUserEmail)return;box.replaceChildren();const docs=snap.docs.filter(d=>d.id!==email);if(!docs.length)box.textContent='일치하는 닉네임이 없어요.';for(const doc of docs){const person={email:doc.id,nickname:doc.data().nickname||doc.id},btn=document.createElement('button');btn.type='button';btn.className='context-item';btn.textContent=person.nickname+' ('+person.email+')';btn.onclick=()=>addMsgRecipient(person);box.append(btn);}}catch(e){if(token===msgSearchGeneration)box.textContent='닉네임을 검색하지 못했어요. 회원 읽기 권한을 확인해 주세요.';}
     }
+    function toggleMsgBroadcast(){const all=document.getElementById('msgBroadcast').checked&&isMessageAdmin();document.getElementById('msgReceiverInput').disabled=all;document.getElementById('msgRecipients').classList.toggle('hidden',all);document.getElementById('msgRecipientResults').classList.toggle('hidden',all);}
+    async function sendDirectMessage(){
+        if(msgSending||!currentUserEmail)return;const email=currentUserEmail,content=document.getElementById('msgContentInput').value.trim(),all=document.getElementById('msgBroadcast').checked;
+        if(!content)return alert('내용을 입력해 주세요.');if(all&&!isMessageAdmin())return alert('레벨 7~9 관리자만 전체 발송할 수 있어요.');if(!all&&!msgRecipients.length)return alert('닉네임 검색 결과에서 받는 사람을 선택해 주세요.');if(!all&&msgRecipients.length>4)return alert('최대 4명까지 선택할 수 있어요.');
+        let targets=msgRecipients.slice(),sent=0;msgSending=true;document.getElementById('msgSendButton').disabled=true;
+        try{
+            if(all){const me=await db.collection('users').doc(email).get({source:'server'});if(!me.exists||Number(me.data().level)<7||Number(me.data().level)>9)throw Error('전체 발송 권한이 없습니다.');const snap=await db.collection('users').get();targets=snap.docs.filter(d=>d.id!==email).map(d=>({email:d.id,nickname:d.data().nickname||d.id}));if(!targets.length)throw Error('발송할 회원이 없습니다.');if(!confirm('전체 회원 '+targets.length+'명에게 쪽지를 보낼까요?'))return;}
+            else {for(const target of targets){const member=await db.collection('users').doc(target.email).get();if(!member.exists)throw Error(target.nickname+'님의 회원 정보를 찾을 수 없어요.');}}
+            for(let offset=0;offset<targets.length;offset+=400){if(currentUserEmail!==email||!auth.currentUser||auth.currentUser.email!==email)throw Error('로그인 상태가 바뀌었습니다.');const batch=db.batch();for(const target of targets.slice(offset,offset+400)){const ref=db.collection('messages').doc();batch.set(ref,{sender:email,senderNickname:currentUserNickname,receiver:target.email,receiverNickname:target.nickname,content,isRead:false,broadcast:all,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}await batch.commit();sent+=targets.slice(offset,offset+400).length;}
+            alert(sent+'명에게 전송했습니다.');switchMsgTab(2);
+        }catch(e){alert((sent?sent+'명 발송 완료 후 중단되었습니다. 중복 발송에 주의해 주세요. ':'발송하지 못했어요. ')+e.message);}finally{msgSending=false;document.getElementById('msgSendButton').disabled=false;}
+    }
+    function refreshRankDisplay(){document.getElementById('sideUserLevel').textContent=currentUserLevel+' · '+rankLabel(currentUserLevel);document.getElementById('adminMenuBtn').classList.toggle('hidden',!canManageAd());document.getElementById('rankNameEditor').classList.toggle('hidden',Number(currentUserLevel)!==9);document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());if(!isMessageAdmin()){document.getElementById('msgBroadcast').checked=false;toggleMsgBroadcast();}}
+    function listenRankNames(){if(rankNamesUnsub)rankNamesUnsub();rankNamesUnsub=db.collection('settings').doc('rankNames').onSnapshot(doc=>{rankNames=doc.exists?(doc.data().names||{}):{};refreshRankDisplay();renderRankNameEditor();},()=>{document.getElementById('rankNameStatus').textContent='등급 이름을 불러오지 못했어요.';});}
+    function renderRankNameEditor(){const box=document.getElementById('rankNameFields');box.replaceChildren();if(Number(currentUserLevel)!==9)return;for(let level=1;level<=9;level++){const label=document.createElement('label');label.style.display='block';label.textContent='Lv.'+level+' · '+rankGroup(level)+' ';const input=document.createElement('input');input.id='rankName_'+level;input.maxLength=20;input.value=rankLabel(level);label.append(input);box.append(label);}}
+    async function saveRankNames(){if(Number(currentUserLevel)!==9)return alert('최고관리자만 설정할 수 있어요.');const names={};for(let i=1;i<=9;i++){names[i]=document.getElementById('rankName_'+i).value.trim();if(!names[i]||names[i].length>20)return alert('등급 이름을 1~20자로 입력해 주세요.');}try{const me=await db.collection('users').doc(currentUserEmail).get({source:'server'});if(!me.exists||Number(me.data().level)!==9)throw Error('최고관리자 권한이 필요해요.');await db.collection('settings').doc('rankNames').set({names});document.getElementById('rankNameStatus').textContent='등급 이름을 저장했어요.';}catch(e){document.getElementById('rankNameStatus').textContent='저장하지 못했어요. '+e.message;}}
 
     // ==========================================
     // [10] 관리자 (메뉴 설정 및 회원관리)
@@ -1589,11 +1551,9 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     }
 
     function switchAdminTab(n) {
-        document.getElementById('adminTabContent1').classList.toggle('hidden', n !== 1);
-        document.getElementById('adminTabContent2').classList.toggle('hidden', n !== 2);
-        document.getElementById('adminTab1').classList.toggle('active', n === 1);
-        document.getElementById('adminTab2').classList.toggle('active', n === 2);
-        if (n === 2) loadAllUsers();
+        if(!canManageAd())return;
+        for(let i=1;i<=3;i++){document.getElementById('adminTabContent'+i).classList.toggle('hidden',n!==i);document.getElementById('adminTab'+i).classList.toggle('active',n===i);}
+        if(n===2){renderRankNameEditor();refreshRankDisplay();loadAllUsers();}
     }
 
     async function loadAllUsers() {
@@ -1614,7 +1574,7 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
                     <td>${data.phone || '-'}</td>
                     <td>${data.address || '-'}</td>
                     <td style="font-weight:bold; color:var(--point-color);">${data.points || 0}</td>
-                    <td><input type="number" id="levelInput_${safeId}" value="${data.level || 0}" style="width: 50px; padding: 6px; text-align:center;"></td>
+                    <td><small>${escapeCafe(rankLabel(data.level))} · ${rankGroup(data.level)}</small><input type="number" id="levelInput_${safeId}" min="1" max="9" value="${data.level || 0}" style="width: 50px; padding: 6px; text-align:center;"></td>
                     <td style="display: flex; gap: 5px;">
                         <button class="btn-main" style="padding: 6px 10px; font-size: 11px;" onclick="updateSpecificUserLevel('${email}', '${safeId}')">수정</button>
                         <button class="btn-sub" style="padding: 6px 10px; font-size: 11px; color:var(--accent-color); border-color:var(--accent-color);" onclick="deleteUserFromDB('${email}')">강퇴</button>
@@ -1636,7 +1596,7 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
 
     async function updateSpecificUserLevel(email, safeId) {
         const newLevel = parseInt(document.getElementById(`levelInput_${safeId}`).value);
-        if (isNaN(newLevel)) return alert("정확한 숫자를 입력해 주세요.");
+        if (!Number.isInteger(newLevel)||newLevel<1||newLevel>9) return alert("1~9 레벨을 입력해 주세요.");
         try {
             await db.collection("users").doc(email).set({ level: newLevel }, { merge: true });
             alert(`Lv.${newLevel} (으)로 수정 완료되었습니다.`);
