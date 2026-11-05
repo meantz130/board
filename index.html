@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meantz 놀이터</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&amp;display=swap">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -26,7 +27,8 @@
             --border-color: #dfe4ea;
         }
 
-        body { font-family: 'Pretendard', -apple-system, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+        body { font-family: 'Gowun Dodum', 'Malgun Gothic', -apple-system, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+        button, input, textarea, select { font-family: inherit; }
         .hidden { display: none !important; }
         button, .pointer, nav ul li, table tbody tr { cursor: pointer; }
         * { box-sizing: border-box; }
@@ -153,6 +155,9 @@
         
         .msg-row { border-bottom: 1px solid #f1f2f6; padding: 15px 10px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; transition: 0.2s; border-radius: 6px; }
         .msg-row:hover { background-color: #f8f9fa; transform: translateX(2px); }
+        .msg-list-item { display: flex; align-items: center; gap: 8px; }
+        .msg-list-item .msg-row { flex: 1; min-width: 0; overflow-wrap: anywhere; gap: 8px; }
+        .msg-list-item .btn-sub { flex-shrink: 0; }
         .msg-unread { font-weight: bold; color: var(--text-main); }
         .msg-read { color: var(--text-sub); }       
 
@@ -527,8 +532,9 @@ main{min-width:0}#desktopAdRail{display:none}@media(min-width:1100px) and (hover
             <div id="msgListArea" style="flex: 1; overflow-y: auto; max-height: 350px;"></div>
         
             <div id="msgWriteArea" class="hidden" style="flex: 1;">
-                <div id="msgRecipients"></div><input type="text" id="msgReceiverInput" placeholder="닉네임 검색 후 선택 (최대 4명)" autocomplete="off" oninput="searchMsgRecipients()"><div id="msgRecipientResults" role="status" style="max-height:150px;overflow:auto"></div><label id="msgBroadcastLabel" class="hidden"><input type="checkbox" id="msgBroadcast" onchange="toggleMsgBroadcast()"> 전체 회원에게 보내기</label>
-                <textarea id="msgContentInput" placeholder="전달할 내용을 작성해 주세요." style="height:180px; resize: none; margin-bottom: 15px;"></textarea>
+                <div id="msgRecipients"></div><input type="text" id="msgReceiverInput" placeholder="닉네임 검색 후 선택 (최대 4명)" autocomplete="off" oninput="saveMsgDraft(); searchMsgRecipients()"><div id="msgRecipientResults" role="status" style="max-height:150px;overflow:auto"></div><label id="msgBroadcastLabel" class="hidden"><input type="checkbox" id="msgBroadcast" onchange="toggleMsgBroadcast(); saveMsgDraft()"> 전체 회원에게 보내기</label>
+                <textarea id="msgContentInput" oninput="saveMsgDraft()" placeholder="전달할 내용을 작성해 주세요." style="height:180px; resize: none; margin-bottom: 15px;"></textarea>
+                <p id="msgDraftStatus" role="status" style="margin:0 0 10px;font-size:12px;color:var(--text-sub);"></p>
                 <button class="btn-main" id="msgSendButton" style="width:100%;" onclick="sendDirectMessage()">전송하기</button>
             </div>
 
@@ -1368,7 +1374,8 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     async function clickSendMsgFromMenu() {
         const target=selectedTargetUser;document.getElementById('contextMenu').classList.add('hidden');
         openMessageModal();switchMsgTab(3);
-        try{const doc=await db.collection('users').doc(target).get();if(doc.exists)addMsgRecipient({email:target,nickname:doc.data().nickname||target});}catch(e){alert('회원 정보를 불러오지 못했어요.');}
+        const email=currentUserEmail, token=msgSearchGeneration;
+        try{const doc=await db.collection('users').doc(target).get();if(doc.exists&&email===currentUserEmail&&token===msgSearchGeneration)addMsgRecipient({email:target,nickname:doc.data().nickname||target});}catch(e){alert('회원 정보를 불러오지 못했어요.');}
     }
 
     // 우클릭 기능 2. 프로필 보기 (공개 설정 반영)
@@ -1486,11 +1493,71 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     const rankGroup=level=>Number(level)===9?'최고관리자':Number(level)>=7&&Number(level)<=8?'관리자':Number(level)>=1&&Number(level)<=6?'일반회원':'미승인';
     const rankLabel=level=>rankNames[level]||rankGroup(level);
     const messageMillis=d=>d.timestamp?.toMillis?.()||0;
+    const msgStorageKey=(kind,email=currentUserEmail)=>'meantz:messages:'+kind+':'+email;
+    function readMsgStorage(key){
+        try { return JSON.parse(localStorage.getItem(key)); }
+        catch { return null; }
+    }
+    function saveMsgDraft(){
+        if(!currentUserEmail)return;
+        const key=msgStorageKey('draft');
+        const draft={
+            content:document.getElementById('msgContentInput').value,
+            query:document.getElementById('msgReceiverInput').value,
+            recipients:msgRecipients,
+            broadcast:isMessageAdmin()&&document.getElementById('msgBroadcast').checked
+        };
+        const status=document.getElementById('msgDraftStatus');
+        try {
+            if(draft.content||draft.query||draft.recipients.length||draft.broadcast){
+                localStorage.setItem(key,JSON.stringify(draft));
+                status.textContent='이 브라우저에 임시 저장됨';
+            } else {
+                localStorage.removeItem(key);
+                status.textContent='';
+            }
+        } catch { status.textContent='브라우저에 임시 저장하지 못했어요.'; }
+    }
+    function restoreMsgDraft(){
+        const draft=readMsgStorage(msgStorageKey('draft'));
+        msgSearchGeneration++;
+        msgRecipients=Array.isArray(draft?.recipients)?draft.recipients:[];
+        renderMsgRecipients();
+        document.getElementById('msgReceiverInput').value=draft?.query||'';
+        document.getElementById('msgContentInput').value=draft?.content||'';
+        document.getElementById('msgRecipientResults').replaceChildren();
+        document.getElementById('msgBroadcast').checked=isMessageAdmin()&&Boolean(draft?.broadcast);
+        document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());
+        document.getElementById('msgDraftStatus').textContent=draft?'임시 저장한 쪽지를 불러왔어요.':'';
+        toggleMsgBroadcast();
+        if(draft?.query&&!document.getElementById('msgBroadcast').checked)searchMsgRecipients();
+    }
+    function deletedMessageIds(type){
+        const ids=readMsgStorage(msgStorageKey(type));
+        return new Set(Array.isArray(ids)?ids:[]);
+    }
+    function deleteMessage(id,type){
+        if(!currentUserEmail||!confirm('이 브라우저의 '+(type==='receiver'?'받은':'보낸')+' 쪽지함에서 삭제할까요?'))return;
+        const ids=deletedMessageIds(type);
+        ids.add(id);
+        try { localStorage.setItem(msgStorageKey(type),JSON.stringify([...ids])); }
+        catch { alert('브라우저에 삭제 상태를 저장하지 못했어요.');return; }
+        refreshDeletedMessages(type);
+    }
+    function refreshDeletedMessages(type){
+        if(type==='receiver')listenToMessages();
+        const tab=type==='receiver'?1:2;
+        if(currentMsgTab===tab&&!document.getElementById('msgListArea').classList.contains('hidden')&&!document.getElementById('messageModal').classList.contains('hidden'))switchMsgTab(tab);
+    }
+    window.addEventListener('storage',event=>{
+        if(!currentUserEmail)return;
+        for(const type of ['receiver','sender'])if(event.key===msgStorageKey(type))refreshDeletedMessages(type);
+    });
     function stopMailbox(){mailboxGeneration++;if(mailboxUnsub)mailboxUnsub();mailboxUnsub=null;}
     function listenToMessages(){
         if(msgUnsubscribe)msgUnsubscribe();const email=currentUserEmail;
         msgUnsubscribe=db.collection('messages').where('receiver','==',email).onSnapshot(snap=>{
-            if(currentUserEmail!==email)return;const count=snap.docs.filter(d=>!d.data().isRead).length,badge=document.getElementById('msgUnreadBadge');badge.classList.toggle('hidden',!count);badge.textContent=count>99?'99+':String(count);
+            if(currentUserEmail!==email)return;const deleted=deletedMessageIds('receiver'),count=snap.docs.filter(d=>!deleted.has(d.id)&&!d.data().isRead).length,badge=document.getElementById('msgUnreadBadge');badge.classList.toggle('hidden',!count);badge.textContent=count>99?'99+':String(count);
         },()=>{document.getElementById('msgUnreadBadge').classList.add('hidden');});
     }
     function openMessageModal(){if(!currentUserEmail)return;document.getElementById('messageModal').classList.remove('hidden');switchMsgTab(1);}
@@ -1500,16 +1567,25 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
         stopMailbox();currentMsgTab=n;for(let i=1;i<=3;i++)document.getElementById('msgTab'+i).classList.toggle('active',n===i);
         document.getElementById('msgListArea').classList.toggle('hidden',n===3);document.getElementById('msgWriteArea').classList.toggle('hidden',n!==3);document.getElementById('msgReadArea').classList.add('hidden');
         if(n===1||n===2)loadMessages(n===1?'receiver':'sender');
-        if(n===3){msgSearchGeneration++;msgRecipients=[];renderMsgRecipients();document.getElementById('msgReceiverInput').value='';document.getElementById('msgContentInput').value='';document.getElementById('msgRecipientResults').replaceChildren();document.getElementById('msgBroadcast').checked=false;document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());toggleMsgBroadcast();}
+        if(n===3)restoreMsgDraft();
     }
     function loadMessages(type){
         const list=document.getElementById('msgListArea'),email=currentUserEmail,token=mailboxGeneration;list.textContent='불러오는 중…';
         mailboxUnsub=db.collection('messages').where(type,'==',email).onSnapshot(snap=>{
-            if(token!==mailboxGeneration||email!==currentUserEmail)return;list.replaceChildren();const docs=snap.docs.slice().sort((a,b)=>messageMillis(b.data())-messageMillis(a.data())||a.id.localeCompare(b.id));
+            if(token!==mailboxGeneration||email!==currentUserEmail)return;list.replaceChildren();const deleted=deletedMessageIds(type),docs=snap.docs.filter(doc=>!deleted.has(doc.id)).sort((a,b)=>messageMillis(b.data())-messageMillis(a.data())||a.id.localeCompare(b.id));
             if(!docs.length){list.textContent='보관된 쪽지가 없습니다.';return;}
             for(const doc of docs){const d=doc.data(),row=document.createElement('button');row.type='button';row.className='msg-row '+(d.isRead?'msg-read':'msg-unread');row.style.cssText='width:100%;text-align:left;border:0;background:transparent';
                 const content=document.createElement('span');content.style.flex='1';content.textContent=(type==='receiver'&&!d.isRead?'🔴 ':'')+String(d.content||'').slice(0,40);
-                const meta=document.createElement('small'),who=type==='receiver'?(d.senderNickname||d.sender):(d.receiverNickname||d.receiver);meta.textContent=(type==='receiver'?'보낸이: ':'받는이: ')+(who||'회원')+(d.broadcast?' · 전체 발송':'')+' · '+(messageMillis(d)?new Date(messageMillis(d)).toLocaleString('ko-KR'):'시간 확인 중');row.append(content,meta);row.onclick=()=>viewMessage(doc.id,d,type);list.append(row);}
+                const meta=document.createElement('small'),who=type==='receiver'?(d.senderNickname||d.sender):(d.receiverNickname||d.receiver);meta.textContent=(type==='receiver'?'보낸이: ':'받는이: ')+(who||'회원')+(d.broadcast?' · 전체 발송':'')+' · '+(messageMillis(d)?new Date(messageMillis(d)).toLocaleString('ko-KR'):'시간 확인 중');row.append(content,meta);row.onclick=()=>viewMessage(doc.id,d,type);const item=document.createElement('div');
+                item.className='msg-list-item';
+                const remove=document.createElement('button');
+                remove.type='button';
+                remove.className='btn-sub';
+                remove.textContent='삭제';
+                remove.onclick=()=>deleteMessage(doc.id,type);
+                item.append(row,remove);
+                list.append(item);
+            }
         },()=>{if(token===mailboxGeneration)list.textContent='목록을 불러오지 못했어요. 쪽지 읽기 권한을 확인해 주세요.';});
     }
     async function viewMessage(id,data,type){
@@ -1517,8 +1593,8 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
         document.getElementById('msgReadHeader').textContent=(type==='receiver'?'보낸 사람: '+(data.senderNickname||data.sender):'받는 사람: '+(data.receiverNickname||data.receiver))+' · '+(messageMillis(data)?new Date(messageMillis(data)).toLocaleString('ko-KR'):'시간 확인 중');document.getElementById('msgReadContent').textContent=data.content||'';
         if(type==='receiver'&&!data.isRead&&data.receiver===currentUserEmail)try{await db.collection('messages').doc(id).update({isRead:true});}catch(e){alert('내용은 열었지만 읽음 상태를 저장하지 못했어요.');}
     }
-    function renderMsgRecipients(){const box=document.getElementById('msgRecipients');box.replaceChildren();for(const person of msgRecipients){const btn=document.createElement('button');btn.type='button';btn.className='btn-sub';btn.textContent=person.nickname+' ×';btn.onclick=()=>{msgRecipients=msgRecipients.filter(p=>p.email!==person.email);renderMsgRecipients();};box.append(btn);}}
-    function addMsgRecipient(person){if(msgSending)return;if(msgRecipients.some(p=>p.email===person.email))return;if(msgRecipients.length>=4)return alert('최대 4명까지 선택할 수 있어요.');if(person.email===currentUserEmail)return;msgRecipients.push(person);renderMsgRecipients();document.getElementById('msgReceiverInput').value='';document.getElementById('msgRecipientResults').replaceChildren();msgSearchGeneration++;}
+    function renderMsgRecipients(){const box=document.getElementById('msgRecipients');box.replaceChildren();for(const person of msgRecipients){const btn=document.createElement('button');btn.type='button';btn.className='btn-sub';btn.textContent=person.nickname+' ×';btn.onclick=()=>{msgRecipients=msgRecipients.filter(p=>p.email!==person.email);renderMsgRecipients();saveMsgDraft();};box.append(btn);}}
+    function addMsgRecipient(person){if(msgSending)return;if(msgRecipients.some(p=>p.email===person.email))return;if(msgRecipients.length>=4)return alert('최대 4명까지 선택할 수 있어요.');if(person.email===currentUserEmail)return;msgRecipients.push(person);renderMsgRecipients();document.getElementById('msgReceiverInput').value='';document.getElementById('msgRecipientResults').replaceChildren();msgSearchGeneration++;saveMsgDraft();}
     async function searchMsgRecipients(){
         const token=++msgSearchGeneration,query=document.getElementById('msgReceiverInput').value.trim(),box=document.getElementById('msgRecipientResults');box.replaceChildren();if(!query)return;box.textContent='검색 중…';const email=currentUserEmail;
         try{const snap=await db.collection('users').orderBy('nickname').startAt(query).endAt(query+'\uf8ff').limit(20).get();if(token!==msgSearchGeneration||email!==currentUserEmail)return;box.replaceChildren();const docs=snap.docs.filter(d=>d.id!==email);if(!docs.length)box.textContent='일치하는 닉네임이 없어요.';for(const doc of docs){const person={email:doc.id,nickname:doc.data().nickname||doc.id},btn=document.createElement('button');btn.type='button';btn.className='context-item';btn.textContent=person.nickname+' ('+person.email+')';btn.onclick=()=>addMsgRecipient(person);box.append(btn);}}catch(e){if(token===msgSearchGeneration)box.textContent='닉네임을 검색하지 못했어요. 회원 읽기 권한을 확인해 주세요.';}
@@ -1527,12 +1603,18 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
     async function sendDirectMessage(){
         if(msgSending||!currentUserEmail)return;const email=currentUserEmail,content=document.getElementById('msgContentInput').value.trim(),all=document.getElementById('msgBroadcast').checked;
         if(!content)return alert('내용을 입력해 주세요.');if(all&&!isMessageAdmin())return alert('레벨 7~9 관리자만 전체 발송할 수 있어요.');if(!all&&!msgRecipients.length)return alert('닉네임 검색 결과에서 받는 사람을 선택해 주세요.');if(!all&&msgRecipients.length>4)return alert('최대 4명까지 선택할 수 있어요.');
+        const draftKey=msgStorageKey('draft',email);
+        const draftAtSend=JSON.stringify(readMsgStorage(draftKey));
         let targets=msgRecipients.slice(),sent=0;msgSending=true;document.getElementById('msgSendButton').disabled=true;
         try{
             if(all){const me=await db.collection('users').doc(email).get({source:'server'});if(!me.exists||Number(me.data().level)<7||Number(me.data().level)>9)throw Error('전체 발송 권한이 없습니다.');const snap=await db.collection('users').get();targets=snap.docs.filter(d=>d.id!==email).map(d=>({email:d.id,nickname:d.data().nickname||d.id}));if(!targets.length)throw Error('발송할 회원이 없습니다.');if(!confirm('전체 회원 '+targets.length+'명에게 쪽지를 보낼까요?'))return;}
             else {for(const target of targets){const member=await db.collection('users').doc(target.email).get();if(!member.exists)throw Error(target.nickname+'님의 회원 정보를 찾을 수 없어요.');}}
             for(let offset=0;offset<targets.length;offset+=400){if(currentUserEmail!==email||!auth.currentUser||auth.currentUser.email!==email)throw Error('로그인 상태가 바뀌었습니다.');const batch=db.batch();for(const target of targets.slice(offset,offset+400)){const ref=db.collection('messages').doc();batch.set(ref,{sender:email,senderNickname:currentUserNickname,receiver:target.email,receiverNickname:target.nickname,content,isRead:false,broadcast:all,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}await batch.commit();sent+=targets.slice(offset,offset+400).length;}
-            alert(sent+'명에게 전송했습니다.');switchMsgTab(2);
+            if(JSON.stringify(readMsgStorage(draftKey))===draftAtSend){
+                try { localStorage.removeItem(draftKey); } catch {}
+                if(currentUserEmail===email&&currentMsgTab===3&&!document.getElementById('messageModal').classList.contains('hidden'))switchMsgTab(2);
+            }
+            alert(sent+'명에게 전송했습니다.');
         }catch(e){alert((sent?sent+'명 발송 완료 후 중단되었습니다. 중복 발송에 주의해 주세요. ':'발송하지 못했어요. ')+e.message);}finally{msgSending=false;document.getElementById('msgSendButton').disabled=false;}
     }
     function refreshRankDisplay(){document.getElementById('sideUserLevel').textContent=currentUserLevel+' · '+rankLabel(currentUserLevel);document.getElementById('adminMenuBtn').classList.toggle('hidden',!canManageAd());document.getElementById('rankNameEditor').classList.toggle('hidden',Number(currentUserLevel)!==9);document.getElementById('msgBroadcastLabel').classList.toggle('hidden',!isMessageAdmin());if(!isMessageAdmin()){document.getElementById('msgBroadcast').checked=false;toggleMsgBroadcast();}}
@@ -1811,6 +1893,7 @@ async function removeAd(){if(!canManageAd())return;if(!confirm('지금 배너를
 </script>
 </body>
 </html>
+
 
 
 
